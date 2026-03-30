@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>DosificadorAntiempaste</title>
+    <script>
+        async function actualizarDatos() {
+            try {
+                const resp = await fetch("/estado.json");
+                if (!resp.ok) return;
+                const data = await resp.json();
+                document.getElementById("agua").textContent = data.agua;
+                document.getElementById("remedio").textContent = data.remedio;
+                document.getElementById("datetime").textContent = data.datetime;
+                document.getElementById("errores").innerHTML = data.errores;
+            } catch (e) {
+                console.log("Error al actualizar datos:", e);
+            }
+        }
+        setInterval(actualizarDatos, 1000);
+        window.onload = actualizarDatos;
+    </script>
+
+</head>
+<body>
+    <h1>Dosificador Antiempaste</h1>
+    
+    <h2>Agua acumulada</h2>
+    <p id="agua">{{AGUA}}</p>
+    
+    <h2>Remedio acumulado</h2>
+    <p id="remedio">{{REMEDIO}}</p>
+    
+    <a href="/config.html"><button>Configuracion</button></a>
+    <a href="/datalog.html"><button>Almacenamiento</button></a>
+    <a href="/errores.html"><button>Errores</button></a>
+    
+    <h2>Hora actual</h2>
+    <p id="datetime">{{DATETIME}}</p>
+    
+    <a href="/configFechaHora.html"><button>Configurar hora</button></a>
+    
+    <h2>Errores</h2>
+    <p id="errores">{{ERRORES}}</p>
+    <form action="/reset_error1" method="post">
+        <button type="submit">Resetear error dosificación</button>
+    </form>
+    
+</body>
+</html>
