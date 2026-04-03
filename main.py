@@ -35,8 +35,8 @@ def main() -> None:
 
     # 2. Hardware
     valvula = ValvulaBebedero(pin=config.VALVULA_PIN)
-    bomba   = CBombaFarmaco(pin=config.BOMBA_PIN)
-
+    bomba   = CBombaFarmaco(pin=config.BOMBA_PIN, parametros=parametros)
+    
     # 3. Núcleo del sistema
     tiempo  = CTiempo(sda_pin=config.TIEMPO_SDA_PIN, scl_pin=config.TIEMPO_SCL_PIN)
     ctdavb  = CTDAVB(parametros)

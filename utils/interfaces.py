@@ -1,28 +1,15 @@
-# interfaces.py
-from abc import ABC, abstractmethod
-from typing import Optional
+# interfaces.py - Versión ultra-ligera para ESP8266
 
-class IValvulaListener(ABC):
-    """Interfaz para recibir cambios de estado de la válvula (abierta/cerrada)."""
-    @abstractmethod
-    def avisoCambioEstadoVB(self, estado: bool) -> None:
-        """
-        estado: True  = válvula ABIERTA (ingreso de agua al bebedero)
-                False = válvula CERRADA
-        """
+class IValvulaListener:
+    def avisoCambioEstadoVB(self, estado):
         raise NotImplementedError
 
 
-class INuevoDia(ABC):
-    """Interfaz para recibir notificación de medianoche (00:00)."""
-    @abstractmethod
-    def avisoNuevoDia(self) -> None:
+class INuevoDia:
+    def avisoNuevoDia(self):
         raise NotImplementedError
 
 
-class ITick(ABC):
-    """Interfaz para recibir ticks cada segundo (orquestado por CTiempo)."""
-    @abstractmethod
-    def tick(self, cadencia: int) -> None:
-        """cadencia = segundos entre ticks (configurado en CParametrosOperativos)"""
+class ITick:
+    def tick(self, cadencia):
         raise NotImplementedError

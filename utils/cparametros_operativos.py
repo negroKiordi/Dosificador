@@ -90,6 +90,18 @@ class CParametrosOperativos:
         self._save()
         return valor
 
+    def get_tiempoMinEncendidoBomba(self) -> int:
+        """Retorna el tiempo mínimo que la bomba debe estar encendida (segundos)."""
+        return self._valores["tiempo_min_encendido_bomba"]
+
+    def set_tiempoMinEncendidoBomba(self, valor: int) -> int:
+        """Fija el tiempo mínimo de encendido (mínimo 1 segundo)."""
+        if valor < 1:
+            valor = 1
+        self._valores["tiempo_min_encendido_bomba"] = valor
+        self._save()
+        return valor
+
     def get_all(self) -> Dict:
         """Devuelve copia de todos los parámetros (útil para web)."""
         return self._valores.copy()
