@@ -91,6 +91,18 @@ class CParametrosOperativos:
         self._save()
         return valor
 
+    def get_tiempoDescansoBomba(self):
+        """Retorna el tiempo mínimo de descanso entre dosificaciones (segundos)."""
+        return self._valores["tiempo_descanso_bomba"]
+    
+    def set_tiempoDescansoBomba(self, valor):
+        """Fija el tiempo mínimo de descanso (mínimo 0 segundos)."""
+        if valor < 0:
+            valor = 0
+        self._valores["tiempo_descanso_bomba"] = valor
+        self._save()
+        return valor    
+
     def get_all(self):
         """Devuelve copia de todos los parámetros (útil para web)."""
         return self._valores.copy()

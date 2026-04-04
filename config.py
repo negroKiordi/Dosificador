@@ -19,7 +19,8 @@ DEFAULT_PARAMETROS = {
     "dosis_diaria_farmaco": 2.5,              # ml / 100 kg
     "q_bomba": 1.33,                          # ml/seg
     "porcentaje_contraccion_tdavb": 75,       # % de contracción del TDAVB para calcular el tiempo de dosificación  
-    "tiempo_encendido_bomba": 5     # Factor que multiplica la cadencia para obtener los segundos de encendido de la bomba (para evitar pulsos muy cortos)
+    "tiempo_encendido_bomba": 5,               # Segundos de encendido de la bomba (para evitar pulsos muy cortos)
+    "tiempo_descanso_bomba": 10               # Tiempo minimo de descanso de la bomba (para evitar sobrecalentamiento)
 }
 
 # Otros

@@ -71,7 +71,6 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
                 return
 
             print("remedio_acumulado_hoy:", round(self._remedio_acumulado_hoy, 1), 
-                  "ml | target_diario:", round(target_diario, 1), 
                   "ml | proporcion_actual:", round(proporcion_actual*100, 1), "%")
             print("Proporcion temporal actual:", round((self._ctdavb.tiempoAperturaAcumulado() / tdavb_contraction) * 100, 1), 
                   "% del tiempo de apertura total")

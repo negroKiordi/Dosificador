@@ -1,1 +1,1 @@
-{"q_bomba": 1.33,  "tiempo_encendido_bomba": 5, "carga": 6000, "dosis_diaria_farmaco": 2.5, "porcentaje_contraccion_tdavb": 75} 
+{"q_bomba": 1.33,  "tiempo_encendido_bomba": 5, "tiempo_descanso_bomba": 60, "carga": 60000, "dosis_diaria_farmaco": 2.5, "porcentaje_contraccion_tdavb": 75} 
