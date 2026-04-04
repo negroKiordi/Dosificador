@@ -1,0 +1,164 @@
+[
+  {
+    "fullPath": "/Testing",
+    "name": "Testing",
+    "isDir": true,
+    "depth": 0
+  },
+  {
+    "fullPath": "/Testing/TestingCTiempo",
+    "name": "TestingCTiempo",
+    "isDir": true,
+    "depth": 1
+  },
+  {
+    "fullPath": "/Testing/read_ds3231_datetime.py",
+    "name": "read_ds3231_datetime.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/Testing/set_ds3231_datetime.py",
+    "name": "set_ds3231_datetime.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/config.py",
+    "name": "config.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/html",
+    "name": "html",
+    "isDir": true,
+    "depth": 0
+  },
+  {
+    "fullPath": "/html/config.html",
+    "name": "config.html",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/html/configFechaHora.html",
+    "name": "configFechaHora.html",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/html/datalog.html",
+    "name": "datalog.html",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/html/index.html",
+    "name": "index.html",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/lib",
+    "name": "lib",
+    "isDir": true,
+    "depth": 0
+  },
+  {
+    "fullPath": "/lib/onewire-0.1.0.dist-info",
+    "name": "onewire-0.1.0.dist-info",
+    "isDir": true,
+    "depth": 1
+  },
+  {
+    "fullPath": "/lib/onewire-0.1.0.dist-info/METADATA",
+    "name": "METADATA",
+    "isDir": true,
+    "depth": 2
+  },
+  {
+    "fullPath": "/lib/onewire-0.1.0.dist-info/RECORD",
+    "name": "RECORD",
+    "isDir": true,
+    "depth": 2
+  },
+  {
+    "fullPath": "/lib/onewire.py",
+    "name": "onewire.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/main.py",
+    "name": "main.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/parametros.json",
+    "name": "parametros.json",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/tdavb_persistencia.json",
+    "name": "tdavb_persistencia.json",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/utils",
+    "name": "utils",
+    "isDir": true,
+    "depth": 0
+  },
+  {
+    "fullPath": "/utils/cbomba_farmaco.py",
+    "name": "cbomba_farmaco.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/utils/cdatalog.py",
+    "name": "cdatalog.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/utils/cdosificar.py",
+    "name": "cdosificar.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/utils/cparametros_operativos.py",
+    "name": "cparametros_operativos.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/utils/ctdavb.py",
+    "name": "ctdavb.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/utils/ctiempo.py",
+    "name": "ctiempo.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/utils/interfaces.py",
+    "name": "interfaces.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/utils/valvula_bebedero.py",
+    "name": "valvula_bebedero.py",
+    "isDir": false,
+    "depth": 1
+  }
+]

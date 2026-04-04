@@ -1,0 +1,71 @@
+# .mpyignore — default rules (similar to .gitignore). Adjust according to your project.
+
+# Paths are relative to the workspace root.
+
+# VCS
+
+.git/
+.svn/
+.hg/
+
+# IDE/Editor
+
+.vscode/
+.idea/
+.vs/
+
+# SO
+
+.DS_Store
+Thumbs.db
+
+# Node/JS
+
+node_modules/
+dist/
+out/
+build/
+.cache/
+coverage/
+.next/
+.nuxt/
+.svelte-kit/
+.turbo/
+.parcel-cache/
+_.log
+npm-debug.log_
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log\*
+
+# Python
+
+**pycache**/
+_.py[cod]
+_.pyo
+_.pyd
+.venv/
+venv/
+.env
+.env._
+.mypy_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+\*.egg-info/
+.tox/
+
+# Otros
+
+_.swp
+_.swo
+
+# MPY Workbench
+
+.mpy-workbench/
+/.mpy-workbench
+
+# Agregados por mi
+
+.gitattributes
+.Testing/

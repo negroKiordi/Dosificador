@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "syncId": "510c6b74-8a3b-4f9a-a624-60341ad0b650",
+  "root": "d:\\GitHub\\Dosificador",
+  "generatedAt": 1775305873088,
+  "files": {
+    "config.py": {
+      "size": 1252,
+      "mtime": 1775265863386
+    },
+    "html/config.html": {
+      "size": 893,
+      "mtime": 1758371720410
+    },
+    "html/configFechaHora.html": {
+      "size": 526,
+      "mtime": 1758371720747
+    },
+    "html/datalog.html": {
+      "size": 285,
+      "mtime": 1758371721036
+    },
+    "html/index.html": {
+      "size": 1621,
+      "mtime": 1758371721576
+    },
+    "lib/onewire-0.1.0.dist-info/METADATA": {
+      "size": 98,
+      "mtime": 1758371722787
+    },
+    "lib/onewire-0.1.0.dist-info/RECORD": {
+      "size": 80,
+      "mtime": 1758371723016
+    },
+    "lib/onewire.py": {
+      "size": 2419,
+      "mtime": 1758371723697
+    },
+    "main.py": {
+      "size": 2565,
+      "mtime": 1775305857416
+    },
+    "parametros.json": {
+      "size": 151,
+      "mtime": 1775265807209
+    },
+    "Testing/read_ds3231_datetime.py": {
+      "size": 694,
+      "mtime": 1775264504939
+    },
+    "Testing/set_ds3231_datetime.py": {
+      "size": 854,
+      "mtime": 1775157959884
+    },
+    "Testing/TestingCTiempo": {
+      "size": 0,
+      "mtime": 1775156888638
+    },
+    "utils/cbomba_farmaco.py": {
+      "size": 2777,
+      "mtime": 1775265065611
+    },
+    "utils/cdatalog.py": {
+      "size": 0,
+      "mtime": 1774902965343
+    },
+    "utils/cdosificar.py": {
+      "size": 2919,
+      "mtime": 1775265322333
+    },
+    "utils/cparametros_operativos.py": {
+      "size": 3765,
+      "mtime": 1775265029385
+    },
+    "utils/ctdavb.py": {
+      "size": 4731,
+      "mtime": 1775265288677
+    },
+    "utils/ctiempo.py": {
+      "size": 4449,
+      "mtime": 1775265582946
+    },
+    "utils/interfaces.py": {
+      "size": 329,
+      "mtime": 1775229360064
+    },
+    "utils/valvula_bebedero.py": {
+      "size": 2290,
+      "mtime": 1775305635880
+    }
+  }
+}

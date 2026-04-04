@@ -6,7 +6,7 @@ from utils.ctiempo import DS3231
 import config
 
 # Configura I2C (ajusta pines si usas otros)
-i2c = I2C(scl=Pin(config.SCL_PIN), sda=Pin(config.SDA_PIN), freq=400000)
+i2c = I2C(scl=Pin(config.TIEMPO_SCL_PIN), sda=Pin(config.TIEMPO_SDA_PIN), freq=400000)
 
 # Inicializa RTC
 rtc = DS3231(i2c)

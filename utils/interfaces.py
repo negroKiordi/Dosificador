@@ -11,5 +11,5 @@ class INuevoDia:
 
 
 class ITick:
-    def tick(self, cadencia):
+    def tick(self):
         raise NotImplementedError

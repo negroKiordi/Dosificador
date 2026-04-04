@@ -1,105 +1,146 @@
-# ctdavb.py
+# utils/ctdavb.py
 import ujson
-from typing import Optional
-from interfaces import IValvulaListener, INuevoDia, ITick
-from cparametros_operativos import CParametrosOperativos
-from valvula_bebedero import ValvulaBebedero
+from utils.interfaces import IValvulaListener, INuevoDia, ITick
+from utils.cparametros_operativos import CParametrosOperativos
+from utils.valvula_bebedero import ValvulaBebedero
 
 # Archivo para persistir el TDAVB del día anterior
-ARCHIVO_TDAVB = "tdavb_anterior.json"
+ARCHIVO_TDAVB = "tdavb_persistencia.json"
 
 class CTDAVB(IValvulaListener, INuevoDia, ITick):
     """
     Clase Tiempo Diario de Apertura de la Válvula del Bebedero (CTDAVB).
     """
 
-    def __init__(self, parametros: CParametrosOperativos) -> None:
+    def __init__(self, parametros):
         self._parametros = parametros
-        self._valvula: Optional[ValvulaBebedero] = None
+        self._valvula = None
 
         # Variables de estado
-        self._tiempo_acumulado_hoy: int = 0          # segundos reales de apertura hoy
-        self._tdavb_anterior: int = 0                # TDAVB del día anterior (segundos)
-        self._esta_abierta: bool = False
+        self._tiempo_acumulado_hoy = 0          # segundos reales de apertura hoy
+        self._tdavb = 0                         # TDAVB actual para dosificación
+        self._esta_abierta = False
 
-        self._load_tdavb_anterior()
+        self._load_tdavb()                     # Cargo configuración guardada (si existe)
 
-        print("✅ CTDAVB iniciada - TDAVB anterior:", self._tdavb_anterior, "segundos")
+        print("CTDAVB iniciada - TDAVB anterior:", self._tdavb, "segundos")
 
     # ================================================================
     # MÉTODOS DE CONFIGURACIÓN
     # ================================================================
-    def CvalvulaBebedero(self, valvula: ValvulaBebedero) -> None:
+    def CvalvulaBebedero(self, valvula):
         """Registra la válvula y sincroniza el estado inicial."""
         self._valvula = valvula
-        # Sincronizamos el flag con la realidad física en el momento de la conexión
+        # Sincronizamos el flag con la realidad física
         if self._valvula is not None:
             self._esta_abierta = self._valvula.valvulaAbierta()
 
-    def CParametrosOperativos(self, parametros: CParametrosOperativos) -> None:
-        self._parametros = parametros
+    def CactualizacionParametrosOperativos(self):
+        """ Aviso de que los parámetros operativos han cambiado. 
+            Por ahora solo la carga afecta al TDAVB, pero podríamos reaccionar a otros cambios en el futuro.
+        """
+        # Por ahora no hacemos nada con los parámetros, pero podríamos recalcular el TDAVB si la carga cambia significativamente.
+        pass    
+
+
 
     # ================================================================
     # INTERFACES IMPLEMENTADAS
     # ================================================================
-    def avisoCambioEstadoVB(self, estado: bool) -> None:
-        """Notificación de cambio de estado de la válvula."""
+    def avisoCambioEstadoVB(self, estado):
+        """Recibe notificación cuando la válvula abre o cierra."""
         self._esta_abierta = estado
 
-    def avisoNuevoDia(self) -> None:
-        """00:00 → guardamos TDAVB de ayer y reseteamos contador del nuevo día.
-           ¡NO tocamos el estado actual de la válvula!"""
-        self._tdavb_anterior = self._tiempo_acumulado_hoy
-        self._save_tdavb_anterior()
+    def avisoNuevoDia(self):
+        """00:00 → Actualizar el TDAVB
+            Si no hubo cambio de carga el TDAVB se actualiza con el valor acumulado al final del día.
+            Si hubo cambio de carga se ajusta el valor actual proporcionalmente al cambio de carga.
+        """
+
+        #cambio de carga?
+        if self._parametros.get_carga() != self._load_carga_anterior():
+            carga_anterior = self._load_carga_anterior()
+            carga_actual = self._parametros.get_Carga()
+            self._save_carga_anterior(carga_actual)  # Guardamos la nueva carga para el próximo día
+
+            if carga_anterior > 0:
+                factor_ajuste = carga_actual / carga_anterior
+                self._tdavb = int(self._tdavb * factor_ajuste)
+                print("[CTDAVB] Cambio de carga detectado. Ajustando TDAVB con factor:", factor_ajuste)
+            else:
+                self._tdavb = self._tiempo_acumulado_hoy  # Si no hay carga anterior, usamos el acumulado tal cual
+        else:
+            self._tdavb = self._tiempo_acumulado_hoy  # Sin cambio de carga, el TDAVB es el acumulado del día
+
+        self._save_tdavb()  # Guardamos el TDAVB del día anterior para referencia futura
 
         self._tiempo_acumulado_hoy = 0
-        # ←←← SE ELIMINÓ la línea self._esta_abierta = False
+        # NO tocamos el estado actual de la válvula
 
-        # Opcional: re-sincronizamos por si hubo algún glitch de reloj
+        # Re-sincronizamos con la realidad por si hubo glitch
         if self._valvula is not None:
             self._esta_abierta = self._valvula.valvulaAbierta()
 
-        print(f"[CTDAVB] Nuevo día → TDAVB anterior guardado: {self._tdavb_anterior} segundos")
+        print("[CTDAVB] Nuevo día → TDAVB anterior guardado:", self._tdavb, "segundos")
 
-    def tick(self, cadencia: int) -> None:
+    def tick(self):
         """Acumula tiempo solo si la válvula está realmente abierta."""
         if self._esta_abierta:
-            self._tiempo_acumulado_hoy += cadencia
+            self._tiempo_acumulado_hoy += 1
 
     # ================================================================
-    # MÉTODOS DE CONSULTA (documento original)
+    # MÉTODOS DE CONSULTA
     # ================================================================
-    def tiempoDiarioApertura(self) -> int:
-        """TDAVB a usar para dosificación (día anterior × porcentaje)."""
+    def tiempoDiarioApertura(self):
+        """
+        Retorna en SEGUNDOS el TDAVB a utilizar para la dosificación.
+        Es el valor del día anterior afectado por el porcentaje de contracción.
+        """
         porcentaje = self._parametros.get_porcentajeContraccionTDAVB()
-        return int(self._tdavb_anterior * porcentaje / 100)
+        return int(self._tdavb * porcentaje / 100)
 
-    def tiempoAperturaAcumulado(self) -> int:
-        """Tiempo real acumulado desde las 00:00 de hoy."""
+    def tiempoAperturaAcumulado(self):
+        """Retorna el tiempo real acumulado desde las 00:00 de hoy."""
         return self._tiempo_acumulado_hoy
 
     # ================================================================
-    # PERSISTENCIA
+    # PERSISTENCIA de la información del CTDAVB
     # ================================================================
-    def _load_tdavb_anterior(self) -> None:
+    def _load_tdavb(self):
         try:
             with open(ARCHIVO_TDAVB, "r") as f:
                 datos = ujson.load(f)
-                self._tdavb_anterior = datos.get("tdavb_anterior", 0)
+                self._tdavb = datos.get("tdavb", 0)
         except (OSError, ValueError):
-            self._tdavb_anterior = 0
+            self._tdavb = 1000
 
-    def _save_tdavb_anterior(self) -> None:
+    def _save_tdavb(self):
         try:
             with open(ARCHIVO_TDAVB, "w") as f:
-                ujson.dump({"tdavb_anterior": self._tdavb_anterior}, f)
+                ujson.dump({"tdavb": self._tdavb}, f)
         except OSError:
-            print("⚠️  No se pudo guardar TDAVB anterior")
+            print("No se pudo guardar TDAVB anterior")
+
+    def _load_carga_anterior(self):
+        try:
+            with open(ARCHIVO_TDAVB, "r") as f:
+                datos = ujson.load(f)
+                return datos.get("carga_anterior", 0)
+        except (OSError, ValueError):
+            return 0
+
+    def _save_carga_anterior(self, carga):
+        try:
+            with open(ARCHIVO_TDAVB, "w") as f:
+                ujson.dump({"carga_anterior": carga}, f)
+        except OSError:
+            print("No se pudo guardar carga anterior")  
+
 
     # ================================================================
     # UTILIDAD (debug / web)
     # ================================================================
-    def get_estado(self) -> dict:
+    def get_estado(self):
         return {
             "tdavb_anterior_seg": self._tdavb_anterior,
             "tiempo_acumulado_hoy_seg": self._tiempo_acumulado_hoy,
