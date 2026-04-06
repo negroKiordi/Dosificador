@@ -2,7 +2,7 @@
 import ujson
 from utils.interfaces import IValvulaListener, INuevoDia, ITick
 from utils.cparametros_operativos import CParametrosOperativos
-from utils.valvula_bebedero import ValvulaBebedero
+from utils.cvalvula_bebedero import CvalvulaBebedero 
 
 # Archivo para persistir el TDAVB del día anterior
 ARCHIVO_TDAVB = "tdavb_persistencia.json"
@@ -28,14 +28,14 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
     # ================================================================
     # MÉTODOS DE CONFIGURACIÓN
     # ================================================================
-    def CvalvulaBebedero(self, valvula):
+    def valvulaBebedero(self, valvula):
         """Registra la válvula y sincroniza el estado inicial."""
         self._valvula = valvula
         # Sincronizamos el flag con la realidad física
         if self._valvula is not None:
             self._esta_abierta = self._valvula.valvulaAbierta()
 
-    def CactualizacionParametrosOperativos(self):
+    def actualizacionParametrosOperativos(self):
         """ Aviso de que los parámetros operativos han cambiado. 
             Por ahora solo la carga afecta al TDAVB, pero podríamos reaccionar a otros cambios en el futuro.
         """

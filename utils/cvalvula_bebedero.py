@@ -1,8 +1,10 @@
 # utils/valvula_bebedero.py
 import machine
 from utils.interfaces import IValvulaListener, ITick
+from utils.datalog import avisoEvento
+from utils.ceventos import Eventos
 
-class ValvulaBebedero(ITick):
+class CvalvulaBebedero(ITick):
     """
     Responsable de leer el microswitch magnético del flotante del bebedero
     y notificar cambios de estado a todos los listeners (CTDAVB y CDosificar).
@@ -55,6 +57,9 @@ class ValvulaBebedero(ITick):
             # Actualizamos estado anterior
             self._estado_anterior = estado_actual
 
+            # Log
+            avisoEvento(Eventos.VB_ABRE) if estado_actual else avisoEvento(Eventos.VB_CIERRA)
+            
             # Debug útil durante las primeras pruebas
             print("[Valvula] Cambio detectado →", "ABIERTA" if estado_actual else "CERRADA")
 

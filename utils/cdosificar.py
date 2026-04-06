@@ -4,6 +4,7 @@ from utils.cbomba_farmaco import CBombaFarmaco
 from utils.cparametros_operativos import CParametrosOperativos
 from utils.ctdavb import CTDAVB
 
+
 class CDosificar(IValvulaListener, INuevoDia, ITick):
     """
     Controla la dosificación según la nueva lógica que pediste.
@@ -89,6 +90,11 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
     def remedioAcumulado(self):
         """Retorna ml de remedio dosificados desde las 00:00 de hoy."""
         return round(self._remedio_acumulado_hoy, 2)
+
+    def remdioAcumuladoEnPorcentaje(self):
+        """Retorna el porcentaje del remedio dosificado respecto a la dosis diaria."""
+        target_diario = self._calcular_dosis_diaria_ml()
+        return round((self._remedio_acumulado_hoy / target_diario * 100), 1) if target_diario > 0 else 0
 
     def set_estado_operativo(self):
         """Cambia el estado a operativo"""
