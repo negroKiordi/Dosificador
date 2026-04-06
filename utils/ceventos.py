@@ -26,5 +26,4 @@ class Eventos:
     VB_CIERRA           = "VB Cierra "
     BOMBA_ARRANCA       = "BombArranc"
     BOMBA_PARA          = "Bomba Para"
-    NUEVO_DIA           = "Nuevo Día "
     DOSIS_COMPLETADA    = "DosisCompl"

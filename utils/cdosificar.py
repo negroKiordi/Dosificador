@@ -3,6 +3,9 @@ from utils.interfaces import IValvulaListener, INuevoDia, ITick
 from utils.cbomba_farmaco import CBombaFarmaco
 from utils.cparametros_operativos import CParametrosOperativos
 from utils.ctdavb import CTDAVB
+from utils.datalog import avisoEvento
+from utils.ceventos import Eventos
+
 
 
 class CDosificar(IValvulaListener, INuevoDia, ITick):
@@ -57,6 +60,7 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
         # Si ya llegamos al máximo diario → apagamos la dosificación
         if self._remedio_acumulado_hoy >= target_diario:
             self._dosing_active = False
+            avisoEvento(Eventos.DOSIS_COMPLETADA)
             print("[Dosificar] ⚠️ Máximo diario alcanzado (", round(self._remedio_acumulado_hoy, 1), "ml)")
             return
 

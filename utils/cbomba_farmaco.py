@@ -2,6 +2,8 @@
 import machine
 from utils.interfaces import ITick
 from utils.cparametros_operativos import CParametrosOperativos
+from utils.datalog import avisoEvento
+from utils.ceventos import Eventos
 
 class CBombaFarmaco(ITick):
     """
@@ -58,19 +60,26 @@ class CBombaFarmaco(ITick):
     # ================================================================
     def tick(self):
         """Llamado cada segundo. Maneja el temporizador de la bomba."""
-        if self._tiempo_restante_encendido > 0:
-            self._pin.value(1)                    # ENCENDIDA
+        if self._pin.value() == 1:  # Si la bomba está encendida
             self._tiempo_restante_encendido -= 1  # Reducimos 1 segundo
             if self._tiempo_restante_encendido <= 0:
                 self._tiempo_restante_encendido = 0
                 self._tiempo_bomba_descansando = self._parametros.get_tiempoDescansoBomba()  # Iniciamos el tiempo de descanso para evitar sobrecalentamiento
-        else:
-            self._pin.value(0)                    # APAGADA
-            # Manejo del tiempo de descanso para evitar sobrecalentamiento
-            if self._tiempo_bomba_descansando > 0:
+                self._pin.value(0)  # APAGADA
+                avisoEvento(Eventos.BOMBA_PARA)
+                print("[Bomba] Apagada")
+        else:   #Esta apagada 
+            if self._tiempo_bomba_descansando > 0:          # Si está descansando, reducimos el tiempo de descanso
                 self._tiempo_bomba_descansando -= 1
                 if self._tiempo_bomba_descansando < 0:
                     self._tiempo_bomba_descansando = 0  
+            else:                                           
+                #Esta apagada y no está descansando 
+                if self._tiempo_restante_encendido > 0:     #Si el tiempo de encendido es mayor a 0, la encendemos                    
+                    self._pin.value(1)                          #ENCENDIDA
+                    print("[Bomba] Encendida")
+                    avisoEvento(Eventos.BOMBA_ARRANCA) 
+                
 
     # ================================================================
     # MÉTODOS MANUALES (útiles para pruebas)

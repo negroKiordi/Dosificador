@@ -5,10 +5,10 @@ from utils.ceventos import Eventos
 LOG_CONFIG = "log_config.csv"
 LOG_OPERATION = "log_operacion.csv"
 
-MAX_LINES_CONFIG = 5# 500
-MAX_LINES_OPERATION = 10 # 2000
-LINE_LENGTH_CONFIG = 75
-LINE_LENGTH_OPERATION = 70
+MAX_LINES_CONFIG = 500
+MAX_LINES_OPERATION = 2000
+LINE_LENGTH_CONFIG = 80
+LINE_LENGTH_OPERATION = 75
 
 
 class CDatalog(INuevoDia):
@@ -51,10 +51,11 @@ class CDatalog(INuevoDia):
                 f.write("Fechora,Fecha,Hora,Evento,VB,Bomba,TAVB[min],%,Farmaco[ml],%")
 
     # ================================================================
-    # NUEVA FUNCIÓN: BUSCA EL REGISTRO MÁS NUEVO POR FECHA+HORA
+    # NUEVA FUNCIÓN: BUSCA EL REGISTRO MÁS NUEVO POR FECHORA Y DEVUELVE LA SIGUIENTE POSICIÓN PARA ESCRIBIR
     # ================================================================
     def _calculate_next_line(self, filename, max_lines):
-        """Busca el registro más reciente comparando Fecha + Hora y devuelve la siguiente posición."""
+        """Busca el registro más reciente comparando Fechora 
+            Fechora es un string fijo de fecha con el formato yyyymmddhhmmss sin separadores."""
         try:
             with open(filename, "r") as f:
                 lines = f.readlines()
@@ -82,6 +83,7 @@ class CDatalog(INuevoDia):
         except OSError:
             # Archivo no existe o error → empezamos desde la primera línea
             return 1
+        
     # ================================================================
     # INTERFAZ PÚBLICA
     # ================================================================
@@ -90,7 +92,7 @@ class CDatalog(INuevoDia):
         fecha = self.tiempo.fecha()
         hora = self.tiempo.hora()
 
-        if event_code in [Eventos.CBIO_CARGA, Eventos.CBIO_DOSIS, Eventos.CBIO_QBOMBA,
+        if event_code in [Eventos.CONFIG,Eventos.CBIO_CARGA, Eventos.CBIO_DOSIS, Eventos.CBIO_QBOMBA,
                           Eventos.CBIO_ENCENDIDO, Eventos.CBIO_DESCANSO, Eventos.CBIO_PORCENTAJE]:
             self._log_config(fechora, fecha, hora, event_code)
         elif event_code in [Eventos.RECH_CARGA, Eventos.RECH_DOSIS, Eventos.RECH_QBOMBA,
@@ -104,8 +106,8 @@ class CDatalog(INuevoDia):
         self._log_operation(fechora, fecha, hora, event_code)
 
     def avisoNuevoDia(self):
-        self.avisoEventoConfiguracion(Eventos.NUEVO_DIA)
-        self.avisoEventoOperativo(Eventos.NUEVO_DIA)
+        self.avisoEventoConfiguracion(Eventos.CONFIG)
+        self.avisoEventoOperativo(Eventos.ESTADO)
 
     # ================================================================
     # ESCRITURA CIRCULAR
@@ -117,7 +119,7 @@ class CDatalog(INuevoDia):
             self.parametros.get_DosisDiariaFarmaco(),
             self.parametros.get_QBomba(),
             self.parametros.get_tiempoMinEncendidoBomba(),
-            0,
+            self.parametros.get_tiempoDescansoBomba(),
             self.parametros.get_porcentajeContraccionTDAVB()
         )
         self._write_fixed(LOG_CONFIG, line, self._current_config, LINE_LENGTH_CONFIG)
@@ -128,15 +130,16 @@ class CDatalog(INuevoDia):
         self._write_fixed(LOG_CONFIG, line, self._current_config, LINE_LENGTH_CONFIG)
         self._current_config = (self._current_config % MAX_LINES_CONFIG) + 1
 
-    def _log_operation(self, fechora, fecha, hora, event_code):
-        vb = "A" if self.valvula.valvulaAbierta() else "C"
-        bomba = "ON " if self.bomba.esta_encendida() else "OFF"
-        tavb_min = self.ctdavb.tiempoAperturaAcumulado() // 60
-        tdavb = self.ctdavb.tiempoDiarioApertura()
-        pct_tavb = round(tavb_min * 60 / tdavb * 100, 0) if tdavb > 0 else 0
-        farmaco = self.dosificar.remedioAcumulado()
-        target = (self.parametros.get_Carga() / 100.0) * self.parametros.get_DosisDiariaFarmaco()
-        pct_farmaco = round(farmaco / target * 100, 0) if target > 0 else 0
+    def _log_operation(self, fechora, fecha, hora, event_code):         #28
+        vb = "A" if self.valvula.valvulaAbierta() else "C"              #29
+        bomba = "ON " if self.bomba.esta_encendida() else "OFF"         #32
+        tavb_min = self.ctdavb.tiempoAperturaAcumulado() // 60          #36
+        tdavb = self.ctdavb.tiempoDiarioApertura()                      #40
+        pct_tavb = round(tavb_min * 60 / tdavb * 100, 1) if tdavb > 0 else 0    #45
+        farmaco = self.dosificar.remedioAcumulado()                             #52
+        target = (self.parametros.get_Carga() / 100.0) * self.parametros.get_DosisDiariaFarmaco()   #57
+        pct_farmaco = round(farmaco / target * 100, 1) if target > 0 else 0                         #62
+                                                                                                    #+10 "," 72
 
         line = "{},{},{},{},{},{},{},{},{},{}".format(fechora,
             fecha, hora, event_code, vb, bomba, tavb_min, pct_tavb,
@@ -160,35 +163,12 @@ class CDatalog(INuevoDia):
             pass
 
     # ================================================================
-    # EXPORTACIÓN (ordena cronológicamente) 
+    # EXPORTACIÓN (estan en orden pueden tener un salto debido a la circularidad)
     # ================================================================
     def exportarLogConfiguracion(self):
-        return self._export_circular(LOG_CONFIG, self._current_config, MAX_LINES_CONFIG)
+        print("Log de Configuración listo:", LOG_CONFIG)
+        return LOG_CONFIG
 
     def exportarLogOperativo(self):
-        return self._export_circular(LOG_OPERATION, self._current_op, MAX_LINES_OPERATION)
-
-    def _export_circular(self, filename, current_line, max_lines):
-        try:
-            with open(filename, "r") as f:
-                lines = f.readlines()
-
-            if len(lines) <= 1:
-                return filename
-
-            header = lines[0]
-            data = lines[1:]
-
-            start = (current_line - 1) % len(data)
-            ordered = data[start:] + data[:start]
-
-            with open(filename, "w") as f:
-                f.write(header)
-                f.writelines(ordered)
-
-            print("Log exportado y ordenado cronológicamente:", filename)
-            return filename
-
-        except OSError:
-            print("Error al exportar", filename)
-            return None
+        print("Log de Operación listo:", LOG_OPERATION)
+        return LOG_OPERATION
