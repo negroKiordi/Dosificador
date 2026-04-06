@@ -1,15 +1,14 @@
-# utils/cdatalog.py 
-from utils.interfaces import INuevoDia  
+# utils/cdatalog.py
+from utils.interfaces import INuevoDia
 from utils.ceventos import Eventos
 
 LOG_CONFIG = "log_config.csv"
 LOG_OPERATION = "log_operacion.csv"
 
-MAX_LINES_CONFIG = 10 #500
-MAX_LINES_OPERATION = 20# 2000
-
-LINE_LENGTH_CONFIG = 61
-LINE_LENGTH_OPERATION = 55
+MAX_LINES_CONFIG = 5# 500
+MAX_LINES_OPERATION = 10 # 2000
+LINE_LENGTH_CONFIG = 75
+LINE_LENGTH_OPERATION = 70
 
 
 class CDatalog(INuevoDia):
@@ -43,70 +42,66 @@ class CDatalog(INuevoDia):
             open(LOG_CONFIG, "r").close()
         except OSError:
             with open(LOG_CONFIG, "w") as f:
-                f.write("Fecha,Hora,Evento,Carga,Dosis,QBomba,T Bomba ON,T Bomba OFF,Contraccion\n")
+                f.write("Fechora,Fecha,Hora,Evento,Carga,Dosis,QBomba,T Bomba ON,T Bomba OFF,Contraccion")
 
         try:
             open(LOG_OPERATION, "r").close()
         except OSError:
             with open(LOG_OPERATION, "w") as f:
-                f.write("Fecha,Hora,Evento,VB,Bomba,TAVB[min],%,Farmaco[ml],%\n")
+                f.write("Fechora,Fecha,Hora,Evento,VB,Bomba,TAVB[min],%,Farmaco[ml],%")
 
+    # ================================================================
+    # NUEVA FUNCIÓN: BUSCA EL REGISTRO MÁS NUEVO POR FECHA+HORA
+    # ================================================================
     def _calculate_next_line(self, filename, max_lines):
-        """Busca el registro más reciente comparando FECHA + HORA correctamente."""
+        """Busca el registro más reciente comparando Fecha + Hora y devuelve la siguiente posición."""
         try:
             with open(filename, "r") as f:
                 lines = f.readlines()
 
-            if len(lines) <= 1:          # solo encabezado o vacío
+            if len(lines) <= 1:          # solo encabezado o archivo vacío
                 return 1
 
             newest_index = 0
-            newest_tuple = (0, 0, 0, 0, 0, 0)   # (año, mes, día, hora, min, seg)
+            newest_datetime = ""         # string "ddmmyyyyhhmmss"
 
             for i, line in enumerate(lines[1:], start=1):   # saltamos encabezado
                 parts = line.strip().split(',')
-                if len(parts) < 2:
+                if len(parts) < 1:
                     continue
+                current_dt  = parts[0].strip()
 
-                fecha = parts[0].strip()   # dd-mm-yyyy
-                hora  = parts[1].strip()   # hh:mm:ss
+                if current_dt > newest_datetime:          # comparación lexicográfica funciona porque el formato es fijo
+                    newest_datetime = current_dt
+                    newest_index = i
 
-                try:
-                    d, m, y = map(int, fecha.split('-'))
-                    h, mi, s = map(int, hora.split(':'))
-                    current_tuple = (y, m, d, h, mi, s)
-
-                    if current_tuple > newest_tuple:
-                        newest_tuple = current_tuple
-                        newest_index = i
-                except:
-                    continue   # línea corrupta, la ignoramos
-
-            # Calculamos la siguiente posición (buffer circular)
+            # La siguiente posición es la que sigue al registro más nuevo (circular)
             next_line = (newest_index % max_lines) + 1
             return next_line
 
         except OSError:
-            return 1   # archivo no existe → empezamos desde el principio       
-
+            # Archivo no existe o error → empezamos desde la primera línea
+            return 1
     # ================================================================
     # INTERFAZ PÚBLICA
     # ================================================================
     def avisoEventoConfiguracion(self, event_code):
+        fechora = self.tiempo.fechora() 
         fecha = self.tiempo.fecha()
         hora = self.tiempo.hora()
 
         if event_code in [Eventos.CBIO_CARGA, Eventos.CBIO_DOSIS, Eventos.CBIO_QBOMBA,
                           Eventos.CBIO_ENCENDIDO, Eventos.CBIO_DESCANSO, Eventos.CBIO_PORCENTAJE]:
-            self._log_config(fecha, hora, event_code)
+            self._log_config(fechora, fecha, hora, event_code)
         elif event_code in [Eventos.RECH_CARGA, Eventos.RECH_DOSIS, Eventos.RECH_QBOMBA,
                             Eventos.RECH_ENCENDIDO, Eventos.RECH_DESCANSO, Eventos.RECH_PORCENTAJE]:
-            self._log_rechazo(fecha, hora, event_code)
+            self._log_rechazo(fechora, fecha, hora, event_code)
 
     def avisoEventoOperativo(self, event_code):
+        fechora = self.tiempo.fechora()
         fecha = self.tiempo.fecha()
         hora = self.tiempo.hora()
-        self._log_operation(fecha, hora, event_code)
+        self._log_operation(fechora, fecha, hora, event_code)
 
     def avisoNuevoDia(self):
         self.avisoEventoConfiguracion(Eventos.NUEVO_DIA)
@@ -115,9 +110,9 @@ class CDatalog(INuevoDia):
     # ================================================================
     # ESCRITURA CIRCULAR
     # ================================================================
-    def _log_config(self, fecha, hora, event_code):
-        line = "{},{},{},{},{},{},{},{},{}\n".format(
-            fecha, hora, event_code,
+    def _log_config(self, fechora, fecha, hora, event_code):
+        line = "{},{},{},{},{},{},{},{},{},{}".format(
+            fechora, fecha, hora, event_code,
             self.parametros.get_Carga(),
             self.parametros.get_DosisDiariaFarmaco(),
             self.parametros.get_QBomba(),
@@ -128,22 +123,22 @@ class CDatalog(INuevoDia):
         self._write_fixed(LOG_CONFIG, line, self._current_config, LINE_LENGTH_CONFIG)
         self._current_config = (self._current_config % MAX_LINES_CONFIG) + 1
 
-    def _log_rechazo(self, fecha, hora, event_code):
-        line = "{},{},{},,,,,,,,\n".format(fecha, hora, event_code)
+    def _log_rechazo(self, fechora, fecha, hora, event_code):
+        line = "{},{},{},{},,,,,,,".format(fechora, fecha, hora, event_code)
         self._write_fixed(LOG_CONFIG, line, self._current_config, LINE_LENGTH_CONFIG)
         self._current_config = (self._current_config % MAX_LINES_CONFIG) + 1
 
-    def _log_operation(self, fecha, hora, event_code):
+    def _log_operation(self, fechora, fecha, hora, event_code):
         vb = "A" if self.valvula.valvulaAbierta() else "C"
-        bomba = "ON" if self.bomba.esta_encendida() else "OFF"
+        bomba = "ON " if self.bomba.esta_encendida() else "OFF"
         tavb_min = self.ctdavb.tiempoAperturaAcumulado() // 60
         tdavb = self.ctdavb.tiempoDiarioApertura()
-        pct_tavb = round(tavb_min * 60 / tdavb * 100, 1) if tdavb > 0 else 0
+        pct_tavb = round(tavb_min * 60 / tdavb * 100, 0) if tdavb > 0 else 0
         farmaco = self.dosificar.remedioAcumulado()
         target = (self.parametros.get_Carga() / 100.0) * self.parametros.get_DosisDiariaFarmaco()
-        pct_farmaco = round(farmaco / target * 100, 1) if target > 0 else 0
+        pct_farmaco = round(farmaco / target * 100, 0) if target > 0 else 0
 
-        line = "{},{},{},{},{},{},{},{},{}\n".format(
+        line = "{},{},{},{},{},{},{},{},{},{}".format(fechora,
             fecha, hora, event_code, vb, bomba, tavb_min, pct_tavb,
             round(farmaco, 2), pct_farmaco
         )
@@ -151,6 +146,11 @@ class CDatalog(INuevoDia):
         self._current_op = (self._current_op % MAX_LINES_OPERATION) + 1
 
     def _write_fixed(self, filename, line, current_line, line_length):
+        if len(line) < line_length:
+            line = line + " " * (line_length - len(line) - 1)
+        elif len(line) > line_length:
+            line = line[:line_length - 1]
+
         try:
             with open(filename, "r+") as f:
                 for _ in range(current_line):
@@ -160,7 +160,7 @@ class CDatalog(INuevoDia):
             pass
 
     # ================================================================
-    # EXPORTACIÓN (ordena cronológicamente)
+    # EXPORTACIÓN (ordena cronológicamente) 
     # ================================================================
     def exportarLogConfiguracion(self):
         return self._export_circular(LOG_CONFIG, self._current_config, MAX_LINES_CONFIG)

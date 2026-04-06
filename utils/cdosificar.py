@@ -91,7 +91,7 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
         """Retorna ml de remedio dosificados desde las 00:00 de hoy."""
         return round(self._remedio_acumulado_hoy, 2)
 
-    def remdioAcumuladoEnPorcentaje(self):
+    def remedioAcumuladoPorcentaje(self):
         """Retorna el porcentaje del remedio dosificado respecto a la dosis diaria."""
         target_diario = self._calcular_dosis_diaria_ml()
         return round((self._remedio_acumulado_hoy / target_diario * 100), 1) if target_diario > 0 else 0

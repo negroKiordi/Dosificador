@@ -17,3 +17,4 @@ print("Hora en DS3231:", year, "-", month, "-", day, " ", hour, ":", minute, ":"
 
 # Opcional: formato legible
 print("Fecha y hora actuales:", "{:02d}-{:02d}-{:04d} {:02d}:{:02d}:{:02d}".format(day, month, year, hour, minute, second))
+print("ordenable:", "{:04d}{:02d}{:02d}{:02d}{:02d}{:02d}".format(year, month, day, hour, minute, second))

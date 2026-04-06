@@ -6,6 +6,7 @@ try:
         
         for linea in f:
             if linea:
+                linea = linea[:-1]  # Eliminar el salto de línea
                 columnas = [col for col in linea.split(',')]
                 print(" | ".join(columnas))   # Separa las columnas con " | "
                 

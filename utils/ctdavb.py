@@ -103,6 +103,12 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
         """Retorna el tiempo real acumulado desde las 00:00 de hoy."""
         return self._tiempo_acumulado_hoy
 
+    def tiempoAperturaAcumuladoPorcentaje(self):
+        """Retorna el porcentaje del tiempo de apertura acumulado respecto al TDAVB."""
+        tdavb_para_dosificacion = self.tiempoDiarioApertura()
+        return round(self._tiempo_acumulado_hoy / tdavb_para_dosificacion * 100, 1) if tdavb_para_dosificacion > 0 else 0
+    
+    
     # ================================================================
     # PERSISTENCIA de la información del CTDAVB
     # ================================================================

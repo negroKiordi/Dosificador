@@ -81,6 +81,12 @@ class CTiempo:
         _, _, _, h, m, s = self.ds3231.get_datetime()
         return "{:02d}:{:02d}:{:02d}".format(h, m, s)
 
+    def fechora(self):
+        """Retorna fecha y hora en formato ddmmyyyyhhmmss (ordenable)"""
+        y, m, d, h, min, s = self.ds3231.get_datetime()
+        return "{:02d}{:02d}{:04d}{:02d}{:02d}{:02d}".format(d, m, y, h, min, s)
+
+
     def listaNuevoDia(self, aviso):
         """Agrega listener para nuevo día (00:00)."""
         if aviso not in self._nuevo_dia_listeners:

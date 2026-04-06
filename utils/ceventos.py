@@ -6,7 +6,7 @@ Usar siempre estos valores para evitar errores de tipeo.
 
 class Eventos:
     """Eventos de Configuración"""
-    CONFIG              = "Config"
+    CONFIG              = "Config    "
     CBIO_CARGA          = "Cbio Carga"
     RECH_CARGA          = "Rech Carga"
     CBIO_DOSIS          = "Cbio Dosis"
@@ -21,10 +21,10 @@ class Eventos:
     RECH_PORCENTAJE     = "Rech %Cont"
 
     """Eventos de Operación"""
-    ESTADO              = "Estado"
-    VB_ABRE             = "VB Abre"
-    VB_CIERRA           = "VB Cierra"
+    ESTADO              = "Estado    "
+    VB_ABRE             = "VB Abre   "
+    VB_CIERRA           = "VB Cierra "
     BOMBA_ARRANCA       = "BombArranc"
     BOMBA_PARA          = "Bomba Para"
-    NUEVO_DIA           = "Nuevo Día"
+    NUEVO_DIA           = "Nuevo Día "
     DOSIS_COMPLETADA    = "DosisCompl"
