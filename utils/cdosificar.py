@@ -22,6 +22,7 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
 
         self._estadoOperativo = True # True = operativo, False = Estado latente para operación manual de bomba
         self._remedio_acumulado_hoy = 0.0
+        self._bomba_atrasada = False
         self._valvula_abierta = False
         self._dosing_active = True
         self._dosis_anterior = self._calcular_dosis_diaria_ml()  # Para detectar cambios en la dosis diaria
@@ -58,26 +59,32 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
         if not self._dosing_active:
             return
 
-        _target_diario = self._calcular_dosis_diaria_ml()
-        
-        # 
-        tdavb = self._ctdavb.tiempoDiarioApertura()
-        if self.tdavb <= 0:
+        self._target_diario = self._calcular_dosis_diaria_ml()
+        if self._target_diario <= 0:
+            return
+
+        self._tdavb = self._ctdavb.tiempoDiarioApertura()
+        if self._tdavb <= 0:
             return
         
-        # Dosifico solo si el acumulado es MENOR al proporcional del tiempo transcurrido
-        _proporcion_actual = self._remedio_acumulado_hoy / self._target_diario if self._target_diario > 0 else 0
+        # Dosifico solo si el remedio Acumulado es MENOR al Requerido.
         _remedio_requerido = (self._target_diario * 
                              (self._ctdavb.tiempoAperturaAcumulado() / 
-                              self.tdavb))
+                              self._tdavb))
         
         if self._remedio_acumulado_hoy >= self._remedio_requerido:
             # No hace falta entregar más remedio.
+            if self._bomba_atrasada:
+                # Si la bomba estaba atrasada pero ya alcanzamos el remedio requerido, 
+                # entonces se normaliza la situación.
+                self._bomba_atrasada = False
+                avisoEvento(Eventos.BOMBA_RECUPERADA)
+                print("[Dosificar] Situación de bomba atrasada se ha normalizado.")
             return
 
         # Es necesario entregar más remedio.
         if self._valvula_abierta:
-            # Está entrando agua. Deboo dosificar.
+            # Está entrando agua. Debo dosificar.
             if self._estadoOperativo:
                 # Estado operativo funcionando. NO está en control manual.
                 # Debo dosificar, estoy atrasado con el remedio.
@@ -87,15 +94,17 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
                 self._pulso_remedio = self._bomba.dosificar()
 
                 if self._pulso_remedio > 0:
+
+                    self._remedio_acumulado_hoy += self._pulso_remedio
+                
+                    _proporcion_actual = self._remedio_acumulado_hoy / self._target_diario
                     print("remedio_acumulado_hoy:", round(self._remedio_acumulado_hoy, 1), 
                           "ml | proporcion_actual:", round(self._proporcion_actual*100, 1), 
                           "%")
                     print("Proporcion temporal actual:", 
-                          round((self._ctdavb.tiempoAperturaAcumulado() / tdavb) * 100, 1), 
+                          round((self._ctdavb.tiempoAperturaAcumulado() / self._tdavb) * 100, 1), 
                           "% del tiempo de apertura total")
                     
-                    self._remedio_acumulado_hoy += self._pulso_remedio
-                
                     # Si ya llegamos al máximo diario → apagamos la dosificación
                     if self._remedio_acumulado_hoy >= self._target_diario:
                         self._dosing_active = False
@@ -113,14 +122,18 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
             # Debo dosificar pero Valvula está cerrada.
             # Esto significa que la bomba no alcanza a seguir el ritmo
             # de apertura de la válvula. Esto es MALO.
-            print("Remedio_requerido:", round(self._remedio_requerido, 1), 
-                  "ml | remedio_acumulado:", round(self._remedio_acumulado_hoy, 1), 
-                    "ml | proporcion_actual:", round(self._proporcion_actual*100, 1), 
-                    "%")
-            print("Proporcion temporal actual:", 
-                    round((self._ctdavb.tiempoAperturaAcumulado() / self.tdavb) * 100, 1), 
-                    "% del tiempo de apertura diario")
-            avisoEvento(Eventos.BOMBA_ATRASADA)
+            if not self._bomba_atrasada:
+
+                self._bomba_atrasada = True
+                _proporcion_actual = self._remedio_acumulado_hoy / self._target_diario
+                print("Remedio_requerido:", round(self._remedio_requerido, 1), 
+                    "ml | remedio_acumulado:", round(self._remedio_acumulado_hoy, 1), 
+                        "ml | proporcion_actual:", round(self._proporcion_actual*100, 1), 
+                        "%")
+                print("Proporcion temporal actual:", 
+                        round((self._ctdavb.tiempoAperturaAcumulado() / self.tdavb) * 100, 1), 
+                        "% del tiempo de apertura diario")
+                avisoEvento(Eventos.BOMBA_ATRASADA)
 
 
     # ================================================================
