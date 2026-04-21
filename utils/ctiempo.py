@@ -21,7 +21,8 @@ class DS3231:
         return ((dec // 10) << 4) | (dec % 10)
 
     def get_datetime(self):
-        """Lee fecha y hora del RTC. Retorna (year, month, day, hour, minute, second)"""
+        """Lee fecha y hora del RTC. Retorna (year, month, 
+        day, hour, minute, second)"""
         data = self.i2c.readfrom_mem(self.addr, 0x00, 7)
         second = self._bcd_to_dec(data[0])
         minute = self._bcd_to_dec(data[1])
@@ -57,9 +58,10 @@ class CTiempo:
     """
 
     def __init__(self, sda_pin, scl_pin, parametros):
+        # I2C que es???
         self.i2c = machine.I2C(sda=machine.Pin(sda_pin),
                                scl=machine.Pin(scl_pin),
-                               freq=400000)
+                               freq=400000) #que es ????
         self.ds3231 = DS3231(self.i2c)
 
         self._parametros = parametros
@@ -91,7 +93,8 @@ class CTiempo:
         """Agrega listener para nuevo día (00:00)."""
         if aviso not in self._nuevo_dia_listeners:
             self._nuevo_dia_listeners.append(aviso)
-            print("CTiempo - Nuevo listener de nuevo día agregado:", aviso.__class__.__name__)
+            print("CTiempo - Nuevo listener de nuevo día agregado:", 
+                  aviso.__class__.__name__)
             return True
         return False
 
@@ -99,7 +102,8 @@ class CTiempo:
         """Agrega listener para recibir tick cada segundo."""
         if aviso not in self._tick_listeners:
             self._tick_listeners.append(aviso)
-            print("CTiempo - Nuevo listener de tick agregado:", aviso.__class__.__name__)
+            print("CTiempo - Nuevo listener de tick agregado:", 
+                  aviso.__class__.__name__)
             return True
         return False
 

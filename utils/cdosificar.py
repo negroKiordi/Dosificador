@@ -38,7 +38,10 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
     # INTERFACES IMPLEMENTADAS
     # ================================================================
     def avisoCambioEstadoVB(self, estado):
-        """La válvula abrió o cerró."""
+        """La válvula abrió o cerró.
+        Solo actualiza su variable self.valvula_abierta para que
+        luego lo procese tick()
+        """
         self._valvula_abierta = estado
 
     def avisoNuevoDia(self):
@@ -55,37 +58,70 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
         if not self._dosing_active:
             return
 
-        target_diario = self._calcular_dosis_diaria_ml()
-
-        # Si ya llegamos al máximo diario → apagamos la dosificación
-        if self._remedio_acumulado_hoy >= target_diario:
-            self._dosing_active = False
-            avisoEvento(Eventos.DOSIS_COMPLETADA)
-            print("[Dosificar] ⚠️ Máximo diario alcanzado (", round(self._remedio_acumulado_hoy, 1), "ml)")
+        _target_diario = self._calcular_dosis_diaria_ml()
+        
+        # 
+        tdavb = self._ctdavb.tiempoDiarioApertura()
+        if self.tdavb <= 0:
+            return
+        
+        # Dosifico solo si el acumulado es MENOR al proporcional del tiempo transcurrido
+        _proporcion_actual = self._remedio_acumulado_hoy / self._target_diario if self._target_diario > 0 else 0
+        _remedio_requerido = (self._target_diario * 
+                             (self._ctdavb.tiempoAperturaAcumulado() / 
+                              self.tdavb))
+        
+        if self._remedio_acumulado_hoy >= self._remedio_requerido:
+            # No hace falta entregar más remedio.
             return
 
+        # Es necesario entregar más remedio.
         if self._valvula_abierta:
-            tdavb_contraction = self._ctdavb.tiempoDiarioApertura()
-            if tdavb_contraction <= 0:
-                return
-
-            # Nueva condición que pediste:
-            # Dosifico solo si el acumulado es MENOR al proporcional  tiempo transcurrido
-            proporcion_actual = self._remedio_acumulado_hoy / target_diario if target_diario > 0 else 0
-            if self._remedio_acumulado_hoy >= (target_diario * (self._ctdavb.tiempoAperturaAcumulado() / tdavb_contraction)):
-                return
-
-            print("remedio_acumulado_hoy:", round(self._remedio_acumulado_hoy, 1), 
-                  "ml | proporcion_actual:", round(proporcion_actual*100, 1), "%")
-            print("Proporcion temporal actual:", round((self._ctdavb.tiempoAperturaAcumulado() / tdavb_contraction) * 100, 1), 
-                  "% del tiempo de apertura total")
-
+            # Está entrando agua. Deboo dosificar.
             if self._estadoOperativo:
-                # Llamamos a dosificar() y acumulamos el volumen REAL que retorna
-                ml_real_dosificado = self._bomba.dosificar()
-                self._remedio_acumulado_hoy += ml_real_dosificado
+                # Estado operativo funcionando. NO está en control manual.
+                # Debo dosificar, estoy atrasado con el remedio.
+                # Llamamos a bomba.dosificar() y acumulamos el volumen REAL
+                # que retorna
+                
+                self._pulso_remedio = self._bomba.dosificar()
+
+                if self._pulso_remedio > 0:
+                    print("remedio_acumulado_hoy:", round(self._remedio_acumulado_hoy, 1), 
+                          "ml | proporcion_actual:", round(self._proporcion_actual*100, 1), 
+                          "%")
+                    print("Proporcion temporal actual:", 
+                          round((self._ctdavb.tiempoAperturaAcumulado() / tdavb) * 100, 1), 
+                          "% del tiempo de apertura total")
+                    
+                    self._remedio_acumulado_hoy += self._pulso_remedio
+                
+                    # Si ya llegamos al máximo diario → apagamos la dosificación
+                    if self._remedio_acumulado_hoy >= self._target_diario:
+                        self._dosing_active = False
+                        avisoEvento(Eventos.DOSIS_COMPLETADA)
+                        print("[Dosificar] ⚠️ Máximo diario alcanzado (", 
+                            round(self._remedio_acumulado_hoy, 1), "ml)")
             else:
-                print("[Dosificar] Estado latente - no se dosifica automáticamente")
+                # Debo dosificar pero Estado es Latente.
+                # ??? Es probable que la bomba se atrase.
+                # Pensar como manejar esta situación para no generar
+                # Eventos Operativos de Atraso falsos debido
+                # a injerencia humana.
+                pass
+        else:
+            # Debo dosificar pero Valvula está cerrada.
+            # Esto significa que la bomba no alcanza a seguir el ritmo
+            # de apertura de la válvula. Esto es MALO.
+            print("Remedio_requerido:", round(self._remedio_requerido, 1), 
+                  "ml | remedio_acumulado:", round(self._remedio_acumulado_hoy, 1), 
+                    "ml | proporcion_actual:", round(self._proporcion_actual*100, 1), 
+                    "%")
+            print("Proporcion temporal actual:", 
+                    round((self._ctdavb.tiempoAperturaAcumulado() / self.tdavb) * 100, 1), 
+                    "% del tiempo de apertura diario")
+            avisoEvento(Eventos.BOMBA_ATRASADA)
+
 
     # ================================================================
     # MÉTODO DE CONSULTA Y CONFIGURACIÓN 
@@ -103,10 +139,12 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
     def set_estado_operativo(self):
         """Cambia el estado a operativo"""
         self._estadoOperativo = True
+        print("[Dosificar] Pasa a Estado Operativo - se reanuda la dosificación")
 
     def set_estado_latente(self):
         """Cambia el estado a latente (para operación manual de bomba)"""
         self._estadoOperativo = False
+        print("[Dosificar] Pasa a Estado latente - no se dosifica automáticamente")
     
     def get_estado_operativo(self):
         """Retorna el estado operativo actual"""
@@ -121,10 +159,11 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
         target_diario = self._calcular_dosis_diaria_ml()
         target_diario_anterior = target_diario / proporcionDeCambio
 
-        #Proporcentaje de remedio entregado hasta ahora con la dosis anterior
-        PorcentajeDosificado = self._remedio_acumulado_hoy / target_diario_anterior if target_diario_anterior > 0 else 0
+        # Proporcentaje de remedio entregado hasta ahora con la dosis anterior
+        PorcentajeDosificado = self._remedio_acumulado_hoy / target_diario_anterior if target_diario_anterior > 0 else 1
         
-        #Recalculo la cantidad de remedio como si se usara la nueva dosis desde el principio del día, para mantener el mismo porcentaje de dosificación
+        # Recalculo la cantidad de remedio como si se usara la nueva dosis desde 
+        # el principio del día, para mantener el mismo porcentaje de dosificación
         self._remedio_acumulado_hoy = target_diario * PorcentajeDosificado
 
         print("[Dosificar] Dosis diaria cambiada. Proporción actual:", round(PorcentajeDosificado*100, 1), "%")

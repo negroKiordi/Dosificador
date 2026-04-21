@@ -10,6 +10,8 @@ ARCHIVO_TDAVB = "tdavb_persistencia.json"
 class CTDAVB(IValvulaListener, INuevoDia, ITick):
     """
     Clase Tiempo Diario de Apertura de la Válvula del Bebedero (CTDAVB).
+    Responsable de computar El Tiempo Diario de Apertura de 
+    la Válvula del Bebedero
     """
 
     def __init__(self, parametros):
@@ -17,11 +19,11 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
         self._valvula = None
 
         # Variables de estado
-        self._tiempo_acumulado_hoy = 0          # segundos reales de apertura hoy
-        self._tdavb = 0                         # TDAVB actual para dosificación
+        self._tiempo_acumulado_hoy = 0   # segundos reales de apertura hoy
+        self._tdavb = 0                  # TDAVB actual para dosificación
         self._esta_abierta = False
 
-        self._load_tdavb()                     # Cargo configuración guardada (si existe)
+        self._load_tdavb()               # Cargo configuración guardada (si existe)
 
         print("CTDAVB iniciada - TDAVB anterior:", self._tdavb, "segundos")
 
@@ -48,40 +50,48 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
     # INTERFACES IMPLEMENTADAS
     # ================================================================
     def avisoCambioEstadoVB(self, estado):
-        """Recibe notificación cuando la válvula abre o cierra."""
+        """Recibe notificación cuando la válvula abre o cierra.
+        Solo actualiza su variable self.esta_abierta para que
+        luego lo procese tick()
+        """
         self._esta_abierta = estado
 
     def avisoNuevoDia(self):
         """00:00 → Actualizar el TDAVB
-            Si no hubo cambio de carga el TDAVB se actualiza con el valor acumulado al final del día.
-            Si hubo cambio de carga se ajusta el valor actual proporcionalmente al cambio de carga.
+            Si no hubo cambio de carga el TDAVB se actualiza con el 
+            valor acumulado al final del día.
+            Si hubo cambio de carga se ajusta el valor actual 
+            proporcionalmente al cambio de carga.
         """
 
-        #cambio de carga?
+        # cambio de carga?
         if self._parametros.get_carga() != self._load_carga_anterior():
+            # Hubo cambio de Carga.
             carga_anterior = self._load_carga_anterior()
             carga_actual = self._parametros.get_Carga()
-            self._save_carga_anterior(carga_actual)  # Guardamos la nueva carga para el próximo día
+            self._save_carga_anterior(carga_actual)  # Guardamos la nueva carga
 
             if carga_anterior > 0:
                 factor_ajuste = carga_actual / carga_anterior
+                # No uso el _tiempo_acumulado_hoy porque hubo cambio de animales
+                # en algún momento del día.
                 self._tdavb = int(self._tdavb * factor_ajuste)
-                print("[CTDAVB] Cambio de carga detectado. Ajustando TDAVB con factor:", factor_ajuste)
+                print("[CTDAVB] Cambio de carga detectado. Ajustando TDAVB con factor:", 
+                      factor_ajuste)
             else:
-                self._tdavb = self._tiempo_acumulado_hoy  # Si no hay carga anterior, usamos el acumulado tal cual
+                # Si no hay carga anterior, usamos el acumulado tal cual.
+                self._tdavb = self._tiempo_acumulado_hoy
         else:
-            self._tdavb = self._tiempo_acumulado_hoy  # Sin cambio de carga, el TDAVB es el acumulado del día
+            # Sin cambio de carga, el TDAVB es el acumulado del día
+            self._tdavb = self._tiempo_acumulado_hoy  
 
-        self._save_tdavb()  # Guardamos el TDAVB del día anterior para referencia futura
+        self._save_tdavb()  # Guardamos el TDAVB del día anterior.
 
         self._tiempo_acumulado_hoy = 0
-        # NO tocamos el estado actual de la válvula
+        # NO tocamos el estado actual de la válvula.
 
-        # Re-sincronizamos con la realidad por si hubo glitch
-        if self._valvula is not None:
-            self._esta_abierta = self._valvula.valvulaAbierta()
-
-        print("[CTDAVB] Nuevo día → TDAVB anterior guardado:", self._tdavb, "segundos")
+        print("[CTDAVB] Nuevo día → TDAVB anterior guardado:",
+              self._tdavb, "segundos")
 
     def tick(self):
         """Acumula tiempo solo si la válvula está realmente abierta."""

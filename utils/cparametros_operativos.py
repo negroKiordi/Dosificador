@@ -80,11 +80,11 @@ class CParametrosOperativos:
         return valor
 
     def get_tiempoEncendidoBomba(self):
-        """Retorna el tiempo mínimo que la bomba debe estar encendida (segundos)."""
+        """Retorna el tiempo que la bomba debe estar encendida (segundos)."""
         return self._valores["tiempo_encendido_bomba"]
 
     def set_tiempoEncendidoBomba(self, valor):
-        """Fija el tiempo mínimo de encendido (mínimo 1 segundo)."""
+        """Fija el tiempo de encendido (mínimo 1 segundo)."""
         if valor < 1:
             valor = 1
         self._valores["tiempo_encendido_bomba"] = valor

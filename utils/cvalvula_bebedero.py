@@ -14,12 +14,13 @@ class CvalvulaBebedero(ITick):
         """
         pin: número de GPIO donde está conectado el microswitch magnético
              (ejemplo: 5 = D1 en NodeMCU V3)
+        _estado_anterior = valor actual de la valvula.
         """
         # Configuración típica para microswitch con pull-up interno
         self._pin = machine.Pin(pin, machine.Pin.IN, machine.Pin.PULL_UP)
         
         # Estado anterior para detectar flancos (cambios)
-        self._estado_anterior = False
+        self._estado_anterior = self.valvulaAbierta()
         
         # Lista de listeners (sin typing)
         self._listeners = []
@@ -31,15 +32,16 @@ class CvalvulaBebedero(ITick):
         Retorna True si la válvula del bebedero está abierta
         (flotante bajo → ingreso de agua).
         """
-        # == 0 porque con PULL_UP el pin está en HIGH cuando el switch está abierto.
-        # Si tu microswitch está cableado de forma inversa, cambia a == 1
-        return self._pin.value() == 0
+        # == 1 porque con PULL_UP el pin está en HIGH cuando el switch está abierto.
+        # Si el microswitch está cableado de forma inversa, cambia a == 0
+        return self._pin.value() == 1
 
     def listaCambioValvula(self, aviso):
         """Agrega un listener que será notificado cuando cambie el estado."""
         if aviso not in self._listeners:
             self._listeners.append(aviso)
-            print("Nuevo listener agregado a ValvulaBebedero:", aviso.__class__.__name__)
+            print("Nuevo listener agregado a ValvulaBebedero:", 
+                  aviso.__class__.__name__)
 
     def tick(self):
         """
@@ -57,10 +59,11 @@ class CvalvulaBebedero(ITick):
             # Actualizamos estado anterior
             self._estado_anterior = estado_actual
 
-            # Log
+            # Inserto Log
             avisoEvento(Eventos.VB_ABRE) if estado_actual else avisoEvento(Eventos.VB_CIERRA)
             
             # Debug útil durante las primeras pruebas
             print("[Valvula] Cambio detectado →", "ABIERTA" if estado_actual else "CERRADA")
 
-        # En esta clase no usamos la cadencia, pero la recibimos por la interfaz ITick
+        # En esta clase no usamos la cadencia,
+        # pero la recibimos por la interfaz ITick

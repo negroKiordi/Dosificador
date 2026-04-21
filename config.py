@@ -6,10 +6,10 @@ Archivo de configuración central.
 # =============================================================================
 # PINES HARDWARE
 # =============================================================================
-VALVULA_PIN = 5          # GPIO5 = D1
+VALVULA_PIN = 5          # GPIO5 = D1  Entrada Switch Valvula
 BOMBA_PIN   = 4          # GPIO4 = D2
-TIEMPO_SDA_PIN = 14      # GPIO14 = D5
-TIEMPO_SCL_PIN = 12      # GPIO12 = D6
+TIEMPO_SDA_PIN = 14      # GPIO14 = D5 ¿Que es???
+TIEMPO_SCL_PIN = 12      # GPIO12 = D6 ¿Que es???
 
 # =============================================================================
 # VALORES POR DEFECTO
