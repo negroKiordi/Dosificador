@@ -3,9 +3,16 @@
 # DOSIFICADOR DE CARMINATIVO ANTI-EMPASTE - Versión con temporización precisa
 # =============================================================================
 
+
+import esp
+esp.osdebug(None)        # Desactiva mensajes de debug del ESP (ahorra RAM)
+import gc
+gc.collect()
+print("Memoria inicial libre:", gc.mem_free(), "bytes")
+
 import machine
 import utime
-
+import gc 
 import config
 
 # Importamos desde la subcarpeta utils/
@@ -60,37 +67,52 @@ def main():
     tiempo.listaTick(bomba)
 
 
+
     # 5. Data Logger (singleton global)
     from utils.datalog import init as datalog_init
     datalog_init(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
-    # Ya se puede usar en cualquier parte del código:
-    # from utils.datalog import datalog
-    # datalog.avisoEvento(Eventos.NUEVO_DIA)
-
 
     print("\n✅ SISTEMA INICIADO CORRECTAMENTE")
-    print("   Válvula → GPIO", config.VALVULA_PIN)
-    print("   Bomba   → GPIO", config.BOMBA_PIN)
-    print("   RTC     → SDA=", config.TIEMPO_SDA_PIN, "  SCL=", config.TIEMPO_SCL_PIN)
+    print(" Válvula → GPIO", config.VALVULA_PIN)
+    print(" Bomba   → GPIO", config.BOMBA_PIN)
+    print(" RTC     → SDA=", config.TIEMPO_SDA_PIN, " SCL=", config.TIEMPO_SCL_PIN)
+    print(" Botón WiFi → GPIO", config.PIN_BOTON_WIFI)
+
 
     # =============================================================================
-    # TEMPORIZACIÓN PRECISA (ejecuta procesar_tick() exactamente cada 1000 ms)
+    # Bucle principal con temporización precisa
     # =============================================================================
-    intervalo_ms = 1000                     # 1 segundo
+
+    gc.collect()
+    try:
+        from utils.cwifimanager import CWifiManager
+        wifi_manager = CWifiManager()
+        gc.collect()
+        print("✅ WiFi Manager cargado | Memoria libre:", gc.mem_free())
+    except MemoryError as e:
+        print("❌ MemoryError al cargar WiFi:", e)
+        print("Memoria disponible:", gc.mem_free())
+        utime.sleep(3)
+        # machine.reset()   # descomenta si quieres reiniciar automáticamente
+
+
+    print("Botón WiFi listo en GPIO", config.PIN_BOTON_WIFI)
+
+    intervalo_ms = 1000
     ultimo_tick = utime.ticks_ms()
-
-    print("Iniciando bucle principal con temporización precisa...")
 
     while True:
         ahora = utime.ticks_ms()
-        
-        # Ejecutamos solo cuando ha pasado 1 segundo
+       
         if utime.ticks_diff(ahora, ultimo_tick) >= intervalo_ms:
             tiempo.procesar_tick()
-            ultimo_tick = ahora                     # reseteamos el contador
+            ultimo_tick = ahora
 
-        # Pequeña pausa para no saturar el CPU (muy importante en ESP8266)
+        wifi_manager.process()
+
         utime.sleep_ms(10)
+
+
 
 
 if __name__ == "__main__":
