@@ -1,50 +1,188 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>DosificadorAntiempaste</title>
-    <script>
-        async function actualizarDatos() {
-            try {
-                const resp = await fetch("/estado.json");
-                if (!resp.ok) return;
-                const data = await resp.json();
-                document.getElementById("agua").textContent = data.agua;
-                document.getElementById("remedio").textContent = data.remedio;
-                document.getElementById("datetime").textContent = data.datetime;
-                document.getElementById("errores").innerHTML = data.errores;
-            } catch (e) {
-                console.log("Error al actualizar datos:", e);
-            }
-        }
-        setInterval(actualizarDatos, 1000);
-        window.onload = actualizarDatos;
-    </script>
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dosificador — Inicio</title>
+<style>
+  :root{--bg:#f0f8ff;--accent:#006400;--muted:#666}
+  body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:24px;background:var(--bg);color:#222}
+  header{display:flex;align-items:center;gap:12px}
+  h1{margin:0;color:var(--accent)}
+  .card{background:#fff;border-radius:8px;padding:16px;margin-top:18px;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .col{flex:1;min-width:180px}
+  .label{font-size:0.85rem;color:var(--muted)}
+  .value{font-size:1.3rem;font-weight:600;margin-top:6px}
+  .pct{color:var(--accent);font-weight:700}
+  .buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  button{background:var(--accent);color:#fff;border:none;padding:10px 12px;border-radius:6px;cursor:pointer}
+  button.ghost{background:#fff;color:var(--accent);border:1px solid #cfead8}
+  footer{margin-top:18px;color:var(--muted);font-size:0.85rem}
+</style>
 </head>
 <body>
-    <h1>Dosificador Antiempaste</h1>
-    
-    <h2>Agua acumulada</h2>
-    <p id="agua">{{AGUA}}</p>
-    
-    <h2>Remedio acumulado</h2>
-    <p id="remedio">{{REMEDIO}}</p>
-    
-    <a href="/config.html"><button>Configuracion</button></a>
-    <a href="/datalog.html"><button>Almacenamiento</button></a>
-    <a href="/errores.html"><button>Errores</button></a>
-    
-    <h2>Hora actual</h2>
-    <p id="datetime">{{DATETIME}}</p>
-    
-    <a href="/configFechaHora.html"><button>Configurar hora</button></a>
-    
-    <h2>Errores</h2>
-    <p id="errores">{{ERRORES}}</p>
-    <form action="/reset_error1" method="post">
-        <button type="submit">Resetear error dosificación</button>
-    </form>
-    
+<header>
+  <h1>Dosificador Carminativo</h1>
+  <div style="margin-left:auto;text-align:right">
+    <div class="label">Red: <strong>Antiempaste</strong></div>
+    <div class="label">Clave: <strong>antiempaste</strong></div>
+  </div>
+</header>
+
+<div class="card" id="valores">
+  <h2>Valores corrientes</h2>
+  <div class="row">
+    <div class="col">
+      <div class="label">Fecha</div>
+      <div class="value" id="fecha">--</div>
+    </div>
+    <div class="col">
+      <div class="label">Hora</div>
+      <div class="value" id="hora">--</div>
+    </div>
+  </div>
+
+  <div style="height:8px"></div>
+
+  <div class="row">
+    <div class="col">
+      <div class="label">TDAVB — Tiempo Apertura Diaria Estimada (s)</div>
+      <div class="value" id="tdavb">--</div>
+      <div class="label" style="margin-top:6px">Estimación diaria de apertura contraído</div>
+    </div>
+
+    <div class="col">
+      <div class="label">TAVB — Tiempo Apertura acumulado (min)</div>
+      <div class="value" id="tavb">--</div>
+      <div class="label">(% respecto a TDAVB) <span id="tavb_pct" class="pct">--</span></div>
+    </div>
+
+    <div class="col">
+      <div class="label">Fármaco entregado (ml)</div>
+      <div class="value" id="farmaco">--</div>
+      <div class="label">(% respecto a dosis diaria) <span id="farmaco_pct" class="pct">--</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="card" id="parametros">
+  <h2>Parámetros</h2>
+  <div class="row">
+    <div class="col">
+      <div class="label">Carga (kg)</div>
+      <div class="value" id="param_carga">--</div>
+    </div>
+    <div class="col">
+      <div class="label">Dosis (ml / 100 kg)</div>
+      <div class="value" id="param_dosis">--</div>
+    </div>
+    <div class="col">
+      <div class="label">Dosis Diaria (ml)</div>
+      <div class="value" id="param_dosis_diaria">--</div>
+    </div>
+  </div>
+
+  <div style="height:10px"></div>
+
+  <div class="row">
+    <div class="col">
+      <div class="label">qBomba (ml/seg)</div>
+      <div class="value" id="param_qbomba">--</div>
+    </div>
+    <div class="col">
+      <div class="label">pulsoBomba (s)</div>
+      <div class="value" id="param_pulso">--</div>
+    </div>
+    <div class="col">
+      <div class="label">descansoMinimoBomba (s)</div>
+      <div class="value" id="param_descanso">--</div>
+    </div>
+    <div class="col">
+      <div class="label">% contracción TDAVB</div>
+      <div class="value" id="param_contraccion">--</div>
+    </div>
+  </div>
+</div>
+
+<div class="card" id="capacidad">
+  <h2>Capacidad</h2>
+  <div class="row">
+    <div class="col">
+      <div class="label">Carga Máxima (kg)</div>
+      <div class="value" id="cap_carga_max">--</div>
+    </div>
+    <div class="col">
+      <div class="label">Dosis Diaria Máxima (ml)</div>
+      <div class="value" id="cap_dosis_max">--</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="buttons">
+    <button id="btn_config">Configurar</button>
+    <button id="btn_descargar" class="ghost">Descargar Historia</button>
+    <button id="btn_manual">Control Manual Bomba</button>
+    <button id="btn_borrar" class="ghost">Borrar Historia</button>
+  </div>
+</div>
+
+<footer>
+  <div id="status" class="label">Conectando…</div>
+</footer>
+
+<script>
+function $(id){return document.getElementById(id)}
+
+// asignar botones (por ahora solo prints en consola)
+$('btn_config').addEventListener('click', ()=>console.log('Configurar'));
+$('btn_descargar').addEventListener('click', ()=>console.log('Descargar Historia'));
+$('btn_manual').addEventListener('click', ()=>console.log('Control Manual Bomba'));
+$('btn_borrar').addEventListener('click', ()=>console.log('Borrar Historia'));
+
+async function actualizar(){
+  try{
+    const r = await fetch('/status',{cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j = await r.json();
+
+    // Valores corrientes
+    $('fecha').textContent = j.fecha || '--';
+    $('hora').textContent  = j.hora  || '--';
+
+    $('tdavb').textContent = (j.ctdavb && j.ctdavb.tiempoDiarioApertura!=null) ? j.ctdavb.tiempoDiarioApertura : '--';
+    $('tavb').textContent  = (j.ctdavb && j.ctdavb.tiempoAperturaAcumulado!=null) ? j.ctdavb.tiempoAperturaAcumulado : '--';
+    $('tavb_pct').textContent = (j.ctdavb && j.ctdavb.tiempoAperturaAcumuladoPorcentaje!=null) ? j.ctdavb.tiempoAperturaAcumuladoPorcentaje+' %' : '--';
+
+    $('farmaco').textContent = (j.dosificar && j.dosificar.remedioAcumulado!=null) ? j.dosificar.remedioAcumulado : '--';
+    $('farmaco_pct').textContent = (j.dosificar && j.dosificar.remedioAcumuladoPorcentaje!=null) ? j.dosificar.remedioAcumuladoPorcentaje+' %' : '--';
+
+    // Parámetros (desde params.get_all())
+    const p = j.parametros || {};
+    $('param_carga').textContent = p.carga!=null ? p.carga : '--';
+    $('param_dosis').textContent = p.dosis_diaria_farmaco!=null ? p.dosis_diaria_farmaco : '--';
+    $('param_dosis_diaria').textContent = p.DosisDiaria!=null ? p.DosisDiaria : '--';
+    $('param_qbomba').textContent = p.q_bomba!=null ? p.q_bomba : '--';
+    $('param_pulso').textContent = p.tiempo_encendido_bomba!=null ? p.tiempo_encendido_bomba : '--';
+    $('param_descanso').textContent = p.tiempo_descanso_bomba!=null ? p.tiempo_descanso_bomba : '--';
+    $('param_contraccion').textContent = p.porcentaje_contraccion_tdavb!=null ? p.porcentaje_contraccion_tdavb+' %' : '--';
+ 
+    // Capacidad
+    $('cap_carga_max').textContent = j.capacidad ? (j.capacidad.cargaMaxima || '--') : '--';
+    $('cap_dosis_max').textContent = j.capacidad ? (j.capacidad.dosisDiariaMaxima || '--') : '--';
+
+    $('status').textContent = 'Última actualización: ' + new Date().toLocaleTimeString();
+  }catch(e){
+    $('status').textContent = 'Error al obtener estado';
+    console.log('fetch error',e);
+  }
+}
+
+// timer cada 1s
+setInterval(actualizar,1000);
+// refresco rápido al abrir
+actualizar();
+</script>
 </body>
 </html>
