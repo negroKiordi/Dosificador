@@ -15,6 +15,9 @@ from utils.ctdavb import CTDAVB
 from utils.cdosificar import CDosificar
 from utils.ctiempo import CTiempo
 from utils.cdatalog import CDatalog
+from utils.datalog import avisoEvento
+from utils.ceventos import Eventos
+
 
 # importa el wifi manager asíncrono
 from utils.cwifimanager_async import CWifiManager
@@ -145,6 +148,12 @@ def main():
     from utils.datalog import init as datalog_init
     datalog_init(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
 
+    if not tiempo.reencendio():
+        print("[main] El sistema se reencendió después de haber estado apagado. Se han reiniciado los acumulados diarios.")
+        avisoEvento(Eventos.ENCENDIDO)
+    else:
+        print("[main] El sistema se reencendió rápidamente. No se reiniciaron los acumulados diarios.")
+        avisoEvento(Eventos.REENCENDIDO)
 
     estado_getter = crear_get_estado(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
     wifi_manager = CWifiManager(estado_getter=estado_getter)
