@@ -29,3 +29,5 @@ class Eventos:
     DOSIS_COMPLETADA    = "DosisCompl"
     BOMBA_ATRASADA      = "BombAtrasa"
     BOMBA_RECUPERADA    = "BombaRecup"
+    REENCENDIDO         = "Reencendid"
+    ENCENDIDO           = "Encendido "

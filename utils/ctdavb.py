@@ -94,8 +94,7 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
         self._tiempo_acumulado_hoy = 0
         # NO tocamos el estado actual de la válvula.
 
-        print("[CTDAVB] Nuevo día → TDAVB anterior guardado:",
-              self._tdavb, "segundos")
+        print("[CTDAVB] Nuevo día → TDAVB anterior guardado:", self._tdavb, "segundos")
 
     def tick(self):
         """Acumula tiempo solo si la válvula está realmente abierta."""
@@ -148,6 +147,7 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
                 datos["tdavb"] = self._tdavb
         except OSError:
             print("[CTDAVB] No se pudo cargar el archivo de persistencia")
+            return
         try:
             with open(ARCHIVO, "w") as f:
                 ujson.dump(datos, f)

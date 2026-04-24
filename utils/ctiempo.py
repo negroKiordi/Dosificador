@@ -2,6 +2,9 @@
 import machine
 import ujson
 from utils.interfaces import INuevoDia, ITick
+import config
+
+
 
 # ================================================================
 # CLASE DS3231 (driver mínimo y compatible con MicroPython)
@@ -54,7 +57,7 @@ class DS3231:
 # ================================================================
 
 # Archivo para persistir datos
-ARCHIVO = "persistenciaDatos.json"
+ARCHIVO = config.ARCHIVO_PERSISTENCIA
 
 class CTiempo:
     """
@@ -72,13 +75,14 @@ class CTiempo:
         self._parametros = parametros
         self._nuevo_dia_listeners = []
         self._tick_listeners = []
+        self._reencendio = self._reiniciar_operacion()
 
         # Para detectar cambio de día
         self._ultima_fecha = self.fecha()
 
         print("[CTiempo] Iniciado con RTC en I2C (SDA=", sda_pin, "SCL=", scl_pin, ")")
 
-        self._reiniciar_operacion()
+
             
 
     def fecha(self):
@@ -123,6 +127,8 @@ class CTiempo:
         fecha_actual = self.fecha()
         if fecha_actual != self._ultima_fecha:
             print("[CTiempo] ¡Nuevo día detectado!", fecha_actual)
+            self.save_dia_opertivo()   # Guardar el nuevo día de operación
+            self.clear_flag_muchos_dias_apagado()  # Limpiar el flag de muchos días apagado
             for listener in self._nuevo_dia_listeners:
                 listener.avisoNuevoDia()
             self._ultima_fecha = fecha_actual
@@ -141,6 +147,25 @@ class CTiempo:
         except OSError:
             print("[CTiempo] No se pudo guardar la fecha del último día de operación")
     
+    def clear_flag_muchos_dias_apagado(self):
+        """Fija el flag de muchos días apagado en el archivo de persistencia."""
+        try:
+            with open(ARCHIVO, "r") as f:
+                datos = ujson.load(f)
+        except (OSError, ValueError):
+            print("[CTiempo] No se pudo abrir el archivo para actualizar el flag.")
+        datos["flag_muchos_dias_apagado"] = False
+        try:
+            with open(ARCHIVO, "w") as f:
+                ujson.dump(datos, f)
+            print("[CTiempo] Flag de muchos días apagado actualizado a:", False)
+        except OSError:
+            print("[CTiempo] No se pudo guardar el flag de muchos días apagado")
+
+
+    def reencendio(self):
+        return self._reencendio
+    
     def _reiniciar_operacion(self):
         fecha_actual = self.fecha()
         try:
@@ -148,19 +173,34 @@ class CTiempo:
             with open(ARCHIVO, "r") as f:
                 datos = ujson.load(f)
         except (OSError, ValueError):
-            print("[CTiempo] No se pudo leer la fecha. Inicializando nuevo día.")
-            return True
+            print("[CTiempo] No se pudo abrir el archivo.")
+            #habria que crear el archivo con valores por defecto
+            datos = {"tdavb": 0, 
+                     "carga_anterior": 0, 
+                     "t_acumulado": 0,
+                     "remedio_dosificado": 0,
+                     "ultimo_dia_operacion": fecha_actual,               
+                     "flag_muchos_dias_apagado": True}
+            with open(ARCHIVO, "w") as f:
+                ujson.dump(datos, f)
+            return False
 
         ultimo_dia_operacion = datos["ultimo_dia_operacion"]
         if fecha_actual != ultimo_dia_operacion:
             print("[CTiempo] Estuvo apagado desde:", ultimo_dia_operacion)
+            carga = self._parametros.get_Carga()    # kg de peso vivo del rodeo
+            aguaDiaria = (carga / 100) * self._parametros.get_aguaConsumidaPor100Kg()   # l de agua diario para el rodeo
+            qBebida = self._parametros.get_QBebida()  # l/seg
+            tiempoDosificacion = int(aguaDiaria / qBebida)   # Segundos de dosificación para el día (en función del consumo diario esperado)
+            datos["tdavb"] = tiempoDosificacion
             datos["t_acumulado"] = 0
             datos["remedio_dosificado"] = 0
             datos["ultimo_dia_operacion"] = fecha_actual
+            datos["flag_muchos_dias_apagado"] = True
             with open(ARCHIVO, "w") as f:
                 ujson.dump(datos, f)
-            return True
+            return False
         else:
             print("Reencendido:", fecha_actual)
-            return False
+            return True
         

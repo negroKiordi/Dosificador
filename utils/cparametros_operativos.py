@@ -103,6 +103,26 @@ class CParametrosOperativos:
         self._save()
         return valor    
 
+    def get_QBebida(self):
+        return self._valores["q_bebida"]
+
+    def set_QBebida(self, caudal):
+        if caudal <= 0:
+            caudal = config.DEFAULT_PARAMETROS["q_bebida"]
+        self._valores["q_bebida"] = caudal
+        self._save()
+        return caudal
+ 
+    def get_aguaConsumidaPor100Kg(self):
+        return self._valores["agua_consumida_por100Kg"]
+ 
+    def set_aguaConsumidaPor100Kg(self, valor):
+        if valor < 0:
+            valor = 0
+        self._valores["agua_consumida_por100Kg"] = valor
+        self._save()
+        return valor    
+
     def get_all(self):
         """Devuelve copia de todos los parámetros (útil para web)."""
         return self._valores.copy()
