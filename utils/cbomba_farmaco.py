@@ -42,12 +42,12 @@ class CBombaFarmaco(ITick):
 
         # No dosificamos si la bomba está descansando
         if self._tiempo_bomba_descansando > 0:
-            print("[Bomba] En descanso")
+            #print("[Bomba] En descanso")
             return 0.0  
 
         # No dosificamos si la bomba ya está encendida, para evitar sobrecarga
         if self._tiempo_restante_encendido > 0:
-            print("[Bomba] Ya encendida")
+            #print("[Bomba] Ya encendida")
             return 0.0  
         
         #Bomba Parada y NO Descansando ==> la puedo encender nuevamente
@@ -57,7 +57,7 @@ class CBombaFarmaco(ITick):
         # Agregamos el tiempo al temporizador interno
         self._tiempo_restante_encendido += tiempo_encendido
 
-        print("[Bomba] Dosificando", round(volumen_dosificado_ml, 2), "ml")
+        #print("[Bomba] Dosificando", round(volumen_dosificado_ml, 2), "ml")
         return volumen_dosificado_ml
 
     # ================================================================
@@ -74,7 +74,7 @@ class CBombaFarmaco(ITick):
                 self._tiempo_bomba_descansando = self._parametros.get_tiempoDescansoBomba()  # Iniciamos el tiempo de descanso para evitar sobrecalentamiento
                 self._pin.value(0)  # APAGO la bomba
                 avisoEvento(Eventos.BOMBA_PARA)
-                print("[Bomba] Apagada")
+                #print("[Bomba] Apagada")
         else:   
             # La bomba está apagada 
             if self._tiempo_bomba_descansando > 0:  
@@ -88,7 +88,7 @@ class CBombaFarmaco(ITick):
                 if self._tiempo_restante_encendido > 0: # El tiempo 
                     # de encendido es mayor a 0, la encendemos                    
                     self._pin.value(1)    # ENCENDIDA
-                    print("[Bomba] Encendida")
+                    #print("[Bomba] Encendida")
                     avisoEvento(Eventos.BOMBA_ARRANCA) 
                 
 
