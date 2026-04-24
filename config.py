@@ -37,13 +37,22 @@ LED_STATUS     = 2     # GPIO2  (muchas placas tienen LED integrado aquí)
 # VALORES POR DEFECTO
 # =============================================================================
 DEFAULT_PARAMETROS = {
-    "carga": 1000,                            # kg de peso vivo del rodeo
+    "carga": 4000,                            # kg de peso vivo del rodeo
     "dosis_diaria_farmaco": 2.5,              # ml / 100 kg
     "q_bomba": 1.33,                          # ml/seg
     "porcentaje_contraccion_tdavb": 75,       # % de contracción del TDAVB para calcular el tiempo de dosificación  
-    "tiempo_encendido_bomba": 5,               # Segundos de encendido de la bomba (para evitar pulsos muy cortos)
-    "tiempo_descanso_bomba": 10               # Tiempo minimo de descanso de la bomba (para evitar sobrecalentamiento)
+    "tiempo_encendido_bomba": 5,              # Segundos de encendido de la bomba (para evitar pulsos muy cortos)
+    "tiempo_descanso_bomba": 10,              # Tiempo minimo de descanso de la bomba (para evitar sobrecalentamiento)
+    "q_bebida": 0.33,                           # l/seg de bebida (para calcular el tiempo de dosificación en función del consumo)
+    "agua_consumida_por100Kg": 10             # l de agua minimo consumida diariamente por cada 100kg de carga 
 }
+
+
+# ================================================================
+# PERSISTENCIA de la información de datos operativos
+# ================================================================
+T_PERSISTENCIA = 600   # Periodo de guardado (en segundos)
+ARCHIVO_PERSISTENCIA = "persistenciaDatos.json"
 
 # =============================================================================
 # Servidor Web y WiFi

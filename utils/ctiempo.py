@@ -1,5 +1,6 @@
 # utils/ctiempo.py
 import machine
+import ujson
 from utils.interfaces import INuevoDia, ITick
 
 # ================================================================
@@ -51,6 +52,10 @@ class DS3231:
 # ================================================================
 # CLASE CTIEMPO
 # ================================================================
+
+# Archivo para persistir datos
+ARCHIVO = "persistenciaDatos.json"
+
 class CTiempo:
     """
     Orquestador de tiempo y notificaciones.
@@ -71,12 +76,15 @@ class CTiempo:
         # Para detectar cambio de día
         self._ultima_fecha = self.fecha()
 
-        print("CTiempo iniciado con RTC en I2C (SDA=", sda_pin, "SCL=", scl_pin, ")")
+        print("[CTiempo] Iniciado con RTC en I2C (SDA=", sda_pin, "SCL=", scl_pin, ")")
+
+        self._reiniciar_operacion()
+            
 
     def fecha(self):
         """Retorna fecha en formato dd-mm-yyyy"""
         y, m, d, _, _, _ = self.ds3231.get_datetime()
-        return "{:02d}-{:02d}-{}".format(d, m, y)
+        return "{:02d}-{:02d}-{:04d}".format(d, m, y)
 
     def hora(self):
         """Retorna hora en formato hh:mm:ss"""
@@ -84,17 +92,16 @@ class CTiempo:
         return "{:02d}:{:02d}:{:02d}".format(h, m, s)
 
     def fechora(self):
-        """Retorna fecha y hora en formato ddmmyyyyhhmmss (ordenable)"""
+        """Retorna fecha y hora en formato yyyymmddhhmmss (ordenable)"""
         y, m, d, h, min, s = self.ds3231.get_datetime()
-        return "{:02d}{:02d}{:04d}{:02d}{:02d}{:02d}".format(d, m, y, h, min, s)
+        return "{:04d}{:02d}{:02d}{:02d}{:02d}{:02d}".format(y, m, d, h, min, s)
 
 
     def listaNuevoDia(self, aviso):
         """Agrega listener para nuevo día (00:00)."""
         if aviso not in self._nuevo_dia_listeners:
             self._nuevo_dia_listeners.append(aviso)
-            print("CTiempo - Nuevo listener de nuevo día agregado:", 
-                  aviso.__class__.__name__)
+            print("[CTiempo] Nuevo listener de nuevo día agregado:", aviso.__class__.__name__)
             return True
         return False
 
@@ -102,8 +109,7 @@ class CTiempo:
         """Agrega listener para recibir tick cada segundo."""
         if aviso not in self._tick_listeners:
             self._tick_listeners.append(aviso)
-            print("CTiempo - Nuevo listener de tick agregado:", 
-                  aviso.__class__.__name__)
+            #print("[CTiempo] Nuevo listener de tick agregado:", aviso.__class__.__name__)
             return True
         return False
 
@@ -124,3 +130,37 @@ class CTiempo:
     def set_datetime(self, year, month, day, hour, minute, second):
         """Método para configurar manualmente el RTC."""
         self.ds3231.set_datetime(year, month, day, hour, minute, second)
+
+    def save_dia_opertivo(self):
+        """Guarda la fecha actual como el último día de operación en el archivo de persistencia."""
+        fecha = self.fecha()
+        try:
+            with open(ARCHIVO, "w") as f:
+                ujson.dump({"ultimo_dia_operacion": fecha}, f)
+            print("[CTiempo] Fecha del último día de operación guardada:", fecha)
+        except OSError:
+            print("[CTiempo] No se pudo guardar la fecha del último día de operación")
+    
+    def _reiniciar_operacion(self):
+        fecha_actual = self.fecha()
+        try:
+            # Leer primero
+            with open(ARCHIVO, "r") as f:
+                datos = ujson.load(f)
+        except (OSError, ValueError):
+            print("[CTiempo] No se pudo leer la fecha. Inicializando nuevo día.")
+            return True
+
+        ultimo_dia_operacion = datos["ultimo_dia_operacion"]
+        if fecha_actual != ultimo_dia_operacion:
+            print("[CTiempo] Estuvo apagado desde:", ultimo_dia_operacion)
+            datos["t_acumulado"] = 0
+            datos["remedio_dosificado"] = 0
+            datos["ultimo_dia_operacion"] = fecha_actual
+            with open(ARCHIVO, "w") as f:
+                ujson.dump(datos, f)
+            return True
+        else:
+            print("Reencendido:", fecha_actual)
+            return False
+        

@@ -3,9 +3,11 @@ import ujson
 from utils.interfaces import IValvulaListener, INuevoDia, ITick
 from utils.cparametros_operativos import CParametrosOperativos
 from utils.cvalvula_bebedero import CvalvulaBebedero 
+import config
 
-# Archivo para persistir el TDAVB del día anterior
-ARCHIVO_TDAVB = "tdavb_persistencia.json"
+# Archivo para persistir datos
+ARCHIVO = config.ARCHIVO_PERSISTENCIA
+
 
 class CTDAVB(IValvulaListener, INuevoDia, ITick):
     """
@@ -22,8 +24,10 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
         self._tiempo_acumulado_hoy = 0   # segundos reales de apertura hoy
         self._tdavb = 0                  # TDAVB actual para dosificación
         self._esta_abierta = False
+        self._ticks_desde_ultima_guarda = 0  # En esta variable se guarda cuantos tick que pasaron desde la ultima vez que se guardó self._tiempo_acumulado_hoy en el archivo, para evitar guardar cada segundo.
 
-        self._load_tdavb()               # Cargo configuración guardada (si existe)
+        self._load_tdavb()                  # Cargo configuración guardada (si existe)
+        self._load_tiempo_acumulado_hoy()   # Cargo el tiempo acumulado de hoy (si existe)
 
         print("CTDAVB iniciada - TDAVB anterior:", self._tdavb, "segundos")
 
@@ -95,8 +99,15 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
 
     def tick(self):
         """Acumula tiempo solo si la válvula está realmente abierta."""
+        self._ticks_desde_ultima_guarda += 1
         if self._esta_abierta:
             self._tiempo_acumulado_hoy += 1
+            self._ticks_desde_ultima_guarda += 1
+            # Guardamos el acumulado cada T_PERSISTENCIA segundos para no perder mucha información en caso de corte de energía.          
+            if self._ticks_desde_ultima_guarda >= config.T_PERSISTENCIA:
+                self._save_tiempo_acumulado_hoy()  # Guardamos el tiempo_acumulado_hoy actual para persistir el valor en caso de corte de energía.
+                self._ticks_desde_ultima_guarda = 0
+                print("[CTDAVB] Guardando tiempo acumulado hoy:", self._tiempo_acumulado_hoy, "segundos") 
 
     # ================================================================
     # MÉTODOS DE CONSULTA
@@ -124,7 +135,7 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
     # ================================================================
     def _load_tdavb(self):
         try:
-            with open(ARCHIVO_TDAVB, "r") as f:
+            with open(ARCHIVO, "r") as f:
                 datos = ujson.load(f)
                 self._tdavb = datos.get("tdavb", 0)
         except (OSError, ValueError):
@@ -132,14 +143,21 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
 
     def _save_tdavb(self):
         try:
-            with open(ARCHIVO_TDAVB, "w") as f:
-                ujson.dump({"tdavb": self._tdavb}, f)
+            with open(ARCHIVO, "r") as f:
+                datos = ujson.load(f)
+                datos["tdavb"] = self._tdavb
         except OSError:
-            print("No se pudo guardar TDAVB anterior")
+            print("[CTDAVB] No se pudo cargar el archivo de persistencia")
+        try:
+            with open(ARCHIVO, "w") as f:
+                ujson.dump(datos, f)
+        except OSError:
+            print("[CTDAVB] No se pudo guardar TDAVB anterior")      
+
 
     def _load_carga_anterior(self):
         try:
-            with open(ARCHIVO_TDAVB, "r") as f:
+            with open(ARCHIVO, "r") as f:
                 datos = ujson.load(f)
                 return datos.get("carga_anterior", 0)
         except (OSError, ValueError):
@@ -147,11 +165,41 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
 
     def _save_carga_anterior(self, carga):
         try:
-            with open(ARCHIVO_TDAVB, "w") as f:
-                ujson.dump({"carga_anterior": carga}, f)
+            with open(ARCHIVO, "r") as f:
+                datos = ujson.load(f)
+                datos["carga_anterior"] = carga
         except OSError:
-            print("No se pudo guardar carga anterior")  
+            print("[CTDAVB] No se pudo cargar el archivo de persistencia")
+        try:
+            with open(ARCHIVO, "w") as f:
+                ujson.dump(datos, f)
+        except OSError:
+            print("[CTDAVB] No se pudo guardar carga anterior")      
 
+    def _load_tiempo_acumulado_hoy(self):
+        try:
+            with open(ARCHIVO, "r") as f:
+                datos = ujson.load(f)
+                self._tiempo_acumulado_hoy = datos["t_acumulado"]
+                print("[CTDAVB] Tiempo acumulado hoy cargado:", self._tiempo_acumulado_hoy, "segundos")
+        except (OSError, ValueError):
+            self._tiempo_acumulado_hoy = 0
+            print("[CTDAVB] No se pudo cargar tiempo acumulado hoy, iniciando en 0 segundos")
+
+    def _save_tiempo_acumulado_hoy(self):
+        try:
+            with open(ARCHIVO, "r") as f:
+                datos = ujson.load(f)
+        except OSError:
+            print("[CTDAVB] No se pudo cargar el archivo de persistencia")
+            datos = {}
+    
+        datos["t_acumulado"] = self._tiempo_acumulado_hoy
+        try:
+            with open(ARCHIVO, "w") as f:
+                ujson.dump(datos, f)
+        except OSError:
+            print("[CTDAVB] No se pudo guardar tiempo acumulado")
 
     # ================================================================
     # UTILIDAD (debug / web)
