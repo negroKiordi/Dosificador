@@ -35,29 +35,21 @@ class CParametrosOperativos:
             print("No se pudo guardar parametros.json")
 
     def _qbomba_alcanza(self, valor_parms):
-        """Computa Qbomba requerido usando los valores recibidos
-         en el parametro valor_parms y 
-         controla que sea menor a _qbomba."""
-        # q_bomba_requerida = q_bebida [lit/min] / 60 [seg/min] 
-        #                     * dosis_diaria_farmaco [ml/100kg]
-        #                     * ( 1 + tiempo_encendido_bomba / tiempo_descanso_bomba ) 
-        #                     / agua_consumida_por100Kg [lit/100kg]
-        q_bomba_requerida = (valor_parms["q_bebida"] / 60) * \
-                            valor_parms["dosis_diaria_farmaco"]  * \
-                            (1 + valor_parms["tiempo_encendido_bomba"] / valor_parms["tiempo_descanso_bomba"]) / \
-                            (valor_parms["agua_consumida_por100Kg"] )
-        if q_bomba_requerida > valor_parms["q_bomba"]:
+        '''Computa Qbomba_requerido usando los valores recibidos valor_parms y 
+         controla que sea menor a q_bomba.'''
+        q_bomba_requerido = self.computa_q_bomba_minimo(self, valor_parms)
+        if q_bomba_requerido > valor_parms["q_bomba"]:
             retorno = { "out": False, \
-                    "msj": "Se requiere al menos " + str(q_bomba_requerida) + \
+                    "msj": "Se requiere al menos " + str(q_bomba_requerido) + \
                     " ml/seg." + "Qbomba =" + valor_parms["q_bomba"] + \
                     " Puede ajustar Dosis, tiempo de descanso o Qbedida" +\
                     " antes de aumentar Qbomba."}
         else:
-            retorno = {"out": True, "msj": "Qbomba alcanza. Qbomba requerido =" + \
-                                           str(q_bomba_requerida) + " ml/seg."}
+            retorno = {"out": True, \
+                       "msj": "Qbomba alcanza. Qbomba requerido =" + \
+                              str(q_bomba_requerido) + " ml/seg.", \
+                       "q_bomba_minimo": q_bomba_requerido}
         return retorno
-        
-     
 
     # ================================================================
     # GET / SET
@@ -88,8 +80,9 @@ class CParametrosOperativos:
             valores_propuestos["dosis_diaria_farmaco"] = dosis
             retorno = self._qbomba_alcanza(valores_propuestos)
             if retorno["out"]:
-                # Si la bomba alcanza, se actualiza el valor
+                # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
                 self._valores["dosis_diaria_farmaco"] = dosis
+                self.actualiza_qbombaMinimo(self, retorno["q_bomba_minimo"])
                 self._save()
                 retorno["msj"] = "Dosis diaria de fármaco actualizada a " + str(dosis) + " ml/100kg."
         return retorno
@@ -105,8 +98,9 @@ class CParametrosOperativos:
             valores_propuestos["q_bomba"] = caudal
             retorno = self._qbomba_alcanza(valores_propuestos)
             if retorno["out"]:
-                # Si la bomba alcanza, se actualiza el valor
+                # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
                 self._valores["q_bomba"] = caudal
+                self.actualiza_qbombaMinimo(self, retorno["q_bomba_minimo"])
                 self._save()
                 retorno["msj"] = "Caudal de la bomba actualizado a " + str(caudal) + " ml/seg."
         return retorno
@@ -136,8 +130,9 @@ class CParametrosOperativos:
             valores_propuestos["tiempo_encendido_bomba"] = valor
             retorno = self._qbomba_alcanza(valores_propuestos)
             if retorno["out"]:
-                # Si la bomba alcanza, se actualiza el valor
+                # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
                 self._valores["tiempo_encendido_bomba"] = valor
+                self.actualiza_qbombaMinimo(self, retorno["q_bomba_minimo"])
                 self._save()
                 retorno["msj"] = "Tiempo Encendido Bomba actualizado a " + str(valor) + " seg."
         return retorno
@@ -155,8 +150,9 @@ class CParametrosOperativos:
             valores_propuestos["tiempo_descanso_bomba"] = valor
             retorno = self._qbomba_alcanza(valores_propuestos)
             if retorno["out"]:
-                # Si la bomba alcanza, se actualiza el valor
+                # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
                 self._valores["tiempo_descanso_bomba"] = valor
+                self.actualiza_qbombaMinimo(self, retorno["q_bomba_minimo"])
                 self._save()
                 retorno["msj"] = "Tiempo Descanso Bomba actualizado a " + str(valor) + " seg."
         return retorno
@@ -172,8 +168,10 @@ class CParametrosOperativos:
             valores_propuestos["q_bebida"] = caudal
             retorno = self._qbomba_alcanza(valores_propuestos)
             if retorno["out"]:
-                # Si la bomba alcanza, se actualiza el valor
+                # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
                 self._valores["q_bebida"] = caudal
+                self.actualiza_qbombaMinimo(self, retorno["q_bomba_minimo"])
+                self.actualiza_cargaMaximaAbrevable(self)
                 self._save()
                 retorno["msj"] = "Caudal de la bebida actualizado a " + str(caudal) + " l/min."
         return retorno
@@ -189,8 +187,10 @@ class CParametrosOperativos:
             valores_propuestos["agua_consumida_por100Kg"] = valor
             retorno = self._qbomba_alcanza(valores_propuestos)
             if retorno["out"]:
-                # Si la bomba alcanza, se actualiza el valor
+                # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
                 self._valores["agua_consumida_por100Kg"] = valor
+                self.actualiza_qbombaMinimo(self, retorno["q_bomba_minimo"])
+                self.actualiza_cargaMaximaAbrevable(self)
                 self._save()
                 retorno["msj"] = "Agua consumida/100kg actualizado a " + str(valor) + " l/100kg."
         return retorno
@@ -198,9 +198,37 @@ class CParametrosOperativos:
     def get_cargaMaximaAbrevable(self):
             return self._valores["carga_maxima_abrevable"]
 
+    def actualiza_cargaMaximaAbrevable(self):
+        """Computa y actualiza sin persisistir el valor de 
+           carga_maxima_abrevable usando los parámetros actuales."""
+        # carga_max = 1440 [min/día] * q_bebida [lit/min] 
+        #              / (agua_consumida_por100Kg [lit/100kg/dia] / 100)
+        carga_max = 1440 * \
+                    self._valores["q_bebida"] / \
+                    self._valores["agua_consumida_por100Kg"] * 100
+        self._valores["carga_maxima_abrevable"] = carga_max
+        return
+    
     def get_qbombaMinimo(self):
-            return self._valores["q_bomba_minimo"]  
-           
+        return self._valores["q_bomba_minimo"]  
+    
+    def actualiza_qbombaMinimo(self, valor):
+        '''Si "self._valores["q_bomba_minimo"] != valor" Actualiza sin persistir.'''
+        if self._valores["q_bomba_minimo"] != valor:
+            self._valores["q_bomba_minimo"] = valor
+        return
+
+    def computa_q_bomba_minimo(self, valor_parms):
+        """Computa el valor de q_bomba_minimo usando valor_parms."""
+        # q_bomba_requerida = q_bebida [lit/min] / 60 [seg/min] 
+        #                     * dosis_diaria_farmaco [ml/100kg]
+        #                     * ( 1 + tiempo_encendido_bomba / tiempo_descanso_bomba ) 
+        #                     / agua_consumida_por100Kg [lit/100kg]
+        q_bomba_requerida = (valor_parms["q_bebida"] / 60) * \
+                            valor_parms["dosis_diaria_farmaco"]  * \
+                            (1 + valor_parms["tiempo_encendido_bomba"] / valor_parms["tiempo_descanso_bomba"]) / \
+                            (valor_parms["agua_consumida_por100Kg"] )
+        return q_bomba_requerida
 
     def get_all(self):
         """Devuelve copia de todos los parámetros (útil para web)."""
