@@ -190,7 +190,7 @@ class CTiempo:
             print("[CTiempo] Estuvo apagado desde:", ultimo_dia_operacion)
             carga = self._parametros.get_Carga()    # kg de peso vivo del rodeo
             aguaDiaria = (carga / 100) * self._parametros.get_aguaConsumidaPor100Kg()   # l de agua diario para el rodeo
-            qBebida = self._parametros.get_QBebida()  # l/seg
+            qBebida = self._parametros.get_QBebida()/60  # l/min lo paso a l/seg
             tiempoDosificacion = int(aguaDiaria / qBebida)   # Segundos de dosificación para el día (en función del consumo diario esperado)
             datos["tdavb"] = tiempoDosificacion
             datos["t_acumulado"] = 0
