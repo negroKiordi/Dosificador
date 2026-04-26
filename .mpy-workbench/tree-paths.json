@@ -12,8 +12,20 @@
     "depth": 1
   },
   {
+    "fullPath": "/Testing/readLogs.py",
+    "name": "readLogs.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
     "fullPath": "/Testing/read_ds3231_datetime.py",
     "name": "read_ds3231_datetime.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/Testing/read_logs.py",
+    "name": "read_logs.py",
     "isDir": false,
     "depth": 1
   },
@@ -22,6 +34,12 @@
     "name": "set_ds3231_datetime.py",
     "isDir": false,
     "depth": 1
+  },
+  {
+    "fullPath": "/boot.py",
+    "name": "boot.py",
+    "isDir": false,
+    "depth": 0
   },
   {
     "fullPath": "/config.py",
@@ -34,24 +52,6 @@
     "name": "html",
     "isDir": true,
     "depth": 0
-  },
-  {
-    "fullPath": "/html/config.html",
-    "name": "config.html",
-    "isDir": false,
-    "depth": 1
-  },
-  {
-    "fullPath": "/html/configFechaHora.html",
-    "name": "configFechaHora.html",
-    "isDir": false,
-    "depth": 1
-  },
-  {
-    "fullPath": "/html/datalog.html",
-    "name": "datalog.html",
-    "isDir": false,
-    "depth": 1
   },
   {
     "fullPath": "/html/index.html",
@@ -90,6 +90,18 @@
     "depth": 1
   },
   {
+    "fullPath": "/log_config.csv",
+    "name": "log_config.csv",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/log_operacion.csv",
+    "name": "log_operacion.csv",
+    "isDir": false,
+    "depth": 0
+  },
+  {
     "fullPath": "/main.py",
     "name": "main.py",
     "isDir": false,
@@ -102,10 +114,28 @@
     "depth": 0
   },
   {
-    "fullPath": "/tdavb_persistencia.json",
-    "name": "tdavb_persistencia.json",
+    "fullPath": "/persistenciaDatos.json",
+    "name": "persistenciaDatos.json",
     "isDir": false,
     "depth": 0
+  },
+  {
+    "fullPath": "/static",
+    "name": "static",
+    "isDir": true,
+    "depth": 0
+  },
+  {
+    "fullPath": "/static/app.js",
+    "name": "app.js",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/static/styles.css",
+    "name": "styles.css",
+    "isDir": false,
+    "depth": 1
   },
   {
     "fullPath": "/utils",
@@ -132,6 +162,12 @@
     "depth": 1
   },
   {
+    "fullPath": "/utils/ceventos.py",
+    "name": "ceventos.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
     "fullPath": "/utils/cparametros_operativos.py",
     "name": "cparametros_operativos.py",
     "isDir": false,
@@ -150,14 +186,32 @@
     "depth": 1
   },
   {
-    "fullPath": "/utils/interfaces.py",
-    "name": "interfaces.py",
+    "fullPath": "/utils/cvalvula_bebedero.py",
+    "name": "cvalvula_bebedero.py",
     "isDir": false,
     "depth": 1
   },
   {
-    "fullPath": "/utils/valvula_bebedero.py",
-    "name": "valvula_bebedero.py",
+    "fullPath": "/utils/cwifimanager.py",
+    "name": "cwifimanager.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/utils/cwifimanager_async.py",
+    "name": "cwifimanager_async.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/utils/datalog.py",
+    "name": "datalog.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/utils/interfaces.py",
+    "name": "interfaces.py",
     "isDir": false,
     "depth": 1
   }

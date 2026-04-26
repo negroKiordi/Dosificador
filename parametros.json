@@ -3,6 +3,8 @@
 "tiempo_descanso_bomba": 4, 
 "porcentaje_contraccion_tdavb": 75, 
 "dosis_diaria_farmaco": 2.5, 
-"agua_consumida_por100Kg": 10, 
-"carga": 16000, 
-"q_bebida": 110}
+"agua_consumida_por100Kg": 10,
+"carga": 16000,
+"q_bebida": 120,
+"carga_maxima_abrevable": 1000000,
+"q_bomba_minimo": 1.0} 

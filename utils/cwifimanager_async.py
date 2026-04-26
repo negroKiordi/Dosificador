@@ -121,16 +121,117 @@ class CWifiManager:
             except:
                 pass
 
+
+    def _content_type(self, path):
+        if path.endswith('.css'):
+            return 'text/css'
+        if path.endswith('.js'):
+            return 'application/javascript'
+        if path.endswith('.html') or path.endswith('.htm'):
+            return 'text/html'
+        if path.endswith('.json'):
+            return 'application/json'
+        if path.endswith('.png'):
+            return 'image/png'
+        if path.endswith('.svg'):
+            return 'image/svg+xml'
+        return 'text/plain'
+
+
+
+    async def _serve_static(self, reader, writer, fs_path):
+        addr = None
+        try:
+            addr = writer.get_extra_info('peername')
+        except:
+            pass
+        print("📡 Servir estático:", fs_path, "->", addr)
+        self.last_client_time = utime.ticks_ms()
+        try:
+            # abrir en modo texto para html/css/js, binario para imágenes; usamos 'rb' y decodificamos según tipo
+            ctype = self._content_type(fs_path)
+            mode = 'rb'
+            with open(fs_path, mode) as f:
+                data = f.read()
+            if isinstance(data, bytes):
+                body = data
+            else:
+                body = str(data).encode('utf-8')
+            header = "HTTP/1.1 200 OK\r\nContent-Type: {}\r\nConnection: close\r\n\r\n".format(ctype)
+            try:
+                await writer.awrite(header)
+                # writer.awrite acepta str; para bytes enviamos chunks
+            except:
+                # si awrite no acepta, intenta writer.write
+                try:
+                    writer.write(header.encode('utf-8'))
+                except:
+                    pass
+            # enviar body (bytes)
+            try:
+                # algunas versiones de writer tienen awrite for str only; intentar write for bytes
+                await writer.awrite(body if isinstance(body, str) else body)
+            except:
+                try:
+                    writer.write(body)
+                except:
+                    pass
+        except OSError:
+            err = ("HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n"
+                   "<h1>404 - archivo no encontrado</h1>")
+            try:
+                await writer.awrite(err)
+            except:
+                try:
+                    writer.write(err.encode('utf-8'))
+                except:
+                    pass
+        except Exception as e:
+            print("⚠️ Error _serve_static:", e)
+        finally:
+            try:
+                await writer.aclose()
+            except:
+                pass
+
     async def _http_dispatch(self, reader, writer):
         # lee primeros bytes para decidir ruta
         try:
-            head = await reader.read(64)
+            head = await reader.read(128)
         except:
             head = b''
-        if b'GET /status' in head:
+        # decidir ruta simple
+        req_line = b''
+        if head:
+            req_line = head.split(b'\r\n', 1)[0]
+        path = '/'
+        try:
+            parts = req_line.split()
+            if len(parts) >= 2:
+                path = parts[1].decode()
+        except:
+            path = '/'
+        # Rutas manejadas
+        if path == '/' or path == '/index.html':
+            await self._serve_static(reader, writer, INDEX_PATH)
+            return
+        if path.startswith('/static/'):
+            # mapear /static/x -> /html/x
+            sub = path[len('/static/'):]
+            fs = '/html/' + sub
+            await self._serve_static(reader, writer, fs)
+            return
+        if path == '/status':
             await self._serve_status(reader, writer)
-        else:
-            await self._serve_index(reader, writer)
+            return
+        # por defecto intentar servir archivo en /html/<route>
+        if path.startswith('/'):
+            fs = '/html' + path
+            await self._serve_static(reader, writer, fs)
+            return
+        # fallback: servir index
+        await self._serve_static(reader, writer, INDEX_PATH)
+
 
     # iniciar servidor asíncrono
     async def _start_server(self):

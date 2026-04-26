@@ -1,28 +1,20 @@
 {
   "version": 1,
-  "syncId": "510c6b74-8a3b-4f9a-a624-60341ad0b650",
+  "syncId": "0df38317-bdce-40d6-a31f-b28e60bfdd74",
   "root": "d:\\GitHub\\Dosificador",
-  "generatedAt": 1775305873088,
+  "generatedAt": 1777155950575,
   "files": {
+    "boot.py": {
+      "size": 139,
+      "mtime": 1776881354322
+    },
     "config.py": {
-      "size": 1252,
-      "mtime": 1775265863386
-    },
-    "html/config.html": {
-      "size": 893,
-      "mtime": 1758371720410
-    },
-    "html/configFechaHora.html": {
-      "size": 526,
-      "mtime": 1758371720747
-    },
-    "html/datalog.html": {
-      "size": 285,
-      "mtime": 1758371721036
+      "size": 3126,
+      "mtime": 1777063603282
     },
     "html/index.html": {
-      "size": 1621,
-      "mtime": 1758371721576
+      "size": 3636,
+      "mtime": 1777154912241
     },
     "lib/onewire-0.1.0.dist-info/METADATA": {
       "size": 98,
@@ -37,16 +29,36 @@
       "mtime": 1758371723697
     },
     "main.py": {
-      "size": 2565,
-      "mtime": 1775305857416
+      "size": 6114,
+      "mtime": 1777155930245
     },
     "parametros.json": {
-      "size": 151,
-      "mtime": 1775265807209
+      "size": 219,
+      "mtime": 1776976780283
+    },
+    "persistenciaDatos.json": {
+      "size": 163,
+      "mtime": 1777070358933
+    },
+    "static/app.js": {
+      "size": 2824,
+      "mtime": 1777154942761
+    },
+    "static/styles.css": {
+      "size": 873,
+      "mtime": 1777154925848
+    },
+    "Testing/readLogs.py": {
+      "size": 484,
+      "mtime": 1775501880635
     },
     "Testing/read_ds3231_datetime.py": {
-      "size": 694,
-      "mtime": 1775264504939
+      "size": 804,
+      "mtime": 1775500083195
+    },
+    "Testing/read_logs.py": {
+      "size": 2513,
+      "mtime": 1775432264712
     },
     "Testing/set_ds3231_datetime.py": {
       "size": 854,
@@ -57,36 +69,48 @@
       "mtime": 1775156888638
     },
     "utils/cbomba_farmaco.py": {
-      "size": 2777,
-      "mtime": 1775265065611
+      "size": 5091,
+      "mtime": 1777056664480
     },
     "utils/cdatalog.py": {
-      "size": 0,
-      "mtime": 1774902965343
+      "size": 7894,
+      "mtime": 1777155713198
     },
     "utils/cdosificar.py": {
-      "size": 2919,
-      "mtime": 1775265322333
+      "size": 10681,
+      "mtime": 1777155420762
+    },
+    "utils/ceventos.py": {
+      "size": 1134,
+      "mtime": 1777071936300
     },
     "utils/cparametros_operativos.py": {
-      "size": 3765,
-      "mtime": 1775265029385
+      "size": 4285,
+      "mtime": 1777069819408
     },
     "utils/ctdavb.py": {
-      "size": 4731,
-      "mtime": 1775265288677
+      "size": 9289,
+      "mtime": 1777155565063
     },
     "utils/ctiempo.py": {
-      "size": 4449,
-      "mtime": 1775265582946
+      "size": 8233,
+      "mtime": 1777072987700
+    },
+    "utils/cvalvula_bebedero.py": {
+      "size": 2904,
+      "mtime": 1777057247215
+    },
+    "utils/cwifimanager_async.py": {
+      "size": 7022,
+      "mtime": 1776887453885
+    },
+    "utils/datalog.py": {
+      "size": 1078,
+      "mtime": 1775394720515
     },
     "utils/interfaces.py": {
-      "size": 329,
-      "mtime": 1775229360064
-    },
-    "utils/valvula_bebedero.py": {
-      "size": 2290,
-      "mtime": 1775305635880
+      "size": 319,
+      "mtime": 1775319263536
     }
   }
 }

@@ -24,6 +24,7 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
         self._parametros = parametros
         self._ctdavb = ctdavb
 
+        print("\n✅ [CDosificar]")
         self._estadoOperativo = True # True = operativo, False = Estado latente para operación manual de bomba
         self._load_remedio_acumulado_hoy()
         self._ticks_desde_ultima_guarda = 0
@@ -32,7 +33,6 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
         self._dosing_active = True
         self._target_diario = self._calcular_dosis_diaria_ml()  
 
-        print("✅ CDosificar iniciada (nueva lógica de dosificación proporcional)")
 
     def _calcular_dosis_diaria_ml(self):
         """Cantidad total de remedio que hay que dosificar hoy (ml)."""

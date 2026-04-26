@@ -20,6 +20,8 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
         self._parametros = parametros
         self._valvula = None
 
+        print("\n✅ [CTDAVB]")
+        
         # Variables de estado
         self._tiempo_acumulado_hoy = 0   # segundos reales de apertura hoy
         self._tdavb = 0                  # TDAVB actual para dosificación
@@ -27,9 +29,9 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
         self._ticks_desde_ultima_guarda = 0  # En esta variable se guarda cuantos tick que pasaron desde la ultima vez que se guardó self._tiempo_acumulado_hoy en el archivo, para evitar guardar cada segundo.
 
         self._load_tdavb()                  # Cargo configuración guardada (si existe)
+        print("[CTDAVB] TDAVB anterior cargado:", self._tdavb, "segundos")
         self._load_tiempo_acumulado_hoy()   # Cargo el tiempo acumulado de hoy (si existe)
-
-        print("CTDAVB iniciada - TDAVB anterior:", self._tdavb, "segundos")
+        print("[CTDAVB] Tiempo acumulado hoy cargado:", self._tiempo_acumulado_hoy, "segundos")
 
     # ================================================================
     # MÉTODOS DE CONFIGURACIÓN
@@ -181,7 +183,6 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
             with open(ARCHIVO, "r") as f:
                 datos = ujson.load(f)
                 self._tiempo_acumulado_hoy = datos["t_acumulado"]
-                print("[CTDAVB] Tiempo acumulado hoy cargado:", self._tiempo_acumulado_hoy, "segundos")
         except (OSError, ValueError):
             self._tiempo_acumulado_hoy = 0
             print("[CTDAVB] No se pudo cargar tiempo acumulado hoy, iniciando en 0 segundos")

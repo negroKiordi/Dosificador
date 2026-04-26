@@ -32,9 +32,9 @@ class CDatalog(INuevoDia):
         self._current_config = self._calculate_next_line(LOG_CONFIG, MAX_LINES_CONFIG)
         self._current_op = self._calculate_next_line(LOG_OPERATION, MAX_LINES_OPERATION)
 
-        print("✅ CDatalog inicializado correctamente")
-        print("   Próxima línea Config:", self._current_config)
-        print("   Próxima línea Operación:", self._current_op)
+        print("\n✅ [CDatalog]")
+        print("[CDatalog]   Próxima línea Config:", self._current_config)
+        print("[CDatalog]   Próxima línea Operación:", self._current_op)
 
     def _create_headers(self):
         """Crea encabezados si no existen."""
