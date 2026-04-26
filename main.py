@@ -30,65 +30,32 @@ def crear_get_estado(tiempo, parametros, valvula, bomba, ctdavb, dosificar):
             hora  = tiempo.hora()
 
             # ctdavb
-            tdavb = None
-            tavb = None
-            tavb_pct = None
-            try:
-                tdavb = ctdavb.tiempoDiarioApertura()
-            except:
-                tdavb = None
-                print("Error al obtener datos de ctdavb")
-            try:
-                tavb = ctdavb.tiempoAperturaAcumulado()   # en minutos si tu método lo da así
-            except:
-                tavb = None
-                print("Error al obtener datos de ctdavb")
-            try:
-                tavb_pct = ctdavb.tiempoAperturaAcumuladoPorcentaje()
-            except:
-                tavb_pct = None
-                print("Error al obtener datos de ctdavb")
+            tdavb = ctdavb.tiempoDiarioApertura()  
+            tdavbacc = ctdavb.tiempoAperturaAcumulado()   # En segundos
+            tavb_pct = ctdavb.tiempoAperturaAcumuladoPorcentaje()
 
             # dosificar
-            remedio = None
-            remedio_pct = None
-            try:
-                remedio = dosificar.remedioAcumulado()
-            except:
-                remedio = None
-                print("Error al obtener datos de dosificar 1")
-            try:
-                remedio_pct = dosificar.remedioAcumuladoPorcentaje()
-            except:
-                remedio_pct = None
-                print("Error al obtener datos de dosificar 2")
+            remedio = dosificar.remedioAcumulado()
+            remedio_pct = dosificar.remedioAcumuladoPorcentaje()
 
             # parametros: usar get_all() (rápido)
-            try:
-                params = parametros.get_all()
-                # opcional: añadir derived params
-                carga = params.get('carga')
-                dosis_per_100 = params.get('dosis_diaria_farmaco')
-                dosis_diaria = None
-                if carga is not None and dosis_per_100 is not None:
-                    dosis_diaria = (carga * dosis_per_100) / 100.0
-                params['DosisDiaria'] = dosis_diaria
-            except:
-                params = {}
-                print("Error al obtener parámetros operativos:", params)
-
-            # capacidad (valores de ejemplo; define cargaMax en config o parámetros)
-            carga_max = getattr(config, 'CARGA_MAXIMA', None)
-            dosis_diaria_max = None
-            if carga_max is not None and params.get('dosis_diaria_farmaco') is not None:
-                dosis_diaria_max = (carga_max * params.get('ddosis_diaria_farmaco')) / 100.0
+            params = parametros.get_all()
+            carga = params.get('carga')
+            dosis_per_100 = params.get('dosis_diaria_farmaco')
+            dosis_diaria = None
+            if carga is not None and dosis_per_100 is not None:
+                dosis_diaria = (carga * dosis_per_100) / 100.0
+            params['DosisDiaria'] = dosis_diaria
  
+            # capacidad (valores de ejemplo; define cargaMax en config o parámetros)
+            carga_max = params.get('carga_maxima_abrevable')  
+            q_bomba_minimo = params.get('q_bomba_minimo')
             estado = {
                 "fecha": fecha,
                 "hora": hora,
                 "ctdavb": {
                     "tiempoDiarioApertura": tdavb,
-                    "tiempoAperturaAcumulado": tavb,
+                    "tiempoAperturaAcumulado": tdavbacc,
                     "tiempoAperturaAcumuladoPorcentaje": tavb_pct
                 },
                 "dosificar": {
@@ -98,10 +65,10 @@ def crear_get_estado(tiempo, parametros, valvula, bomba, ctdavb, dosificar):
                 "parametros": params,
                 "capacidad": {
                     "cargaMaxima": carga_max,
-                    "dosisDiariaMaxima": dosis_diaria_max
+                    "qbombaminimo": q_bomba_minimo
                 }
             }
-            print(estado)
+            #print(estado)
         except Exception as e:
             print("Error al obtener estado completo:", e)
             estado = {"error": str(e)}
@@ -149,10 +116,10 @@ def main():
     datalog_init(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
 
     if not tiempo.reencendio():
-        print("[main] El sistema se reencendió después de haber estado apagado. Se han reiniciado los acumulados diarios.")
+        print("\n✅ [main] El sistema se reencendió después de haber estado apagado. Se han reiniciado los acumulados diarios.")
         avisoEvento(Eventos.ENCENDIDO)
     else:
-        print("[main] El sistema se reencendió rápidamente. No se reiniciaron los acumulados diarios.")
+        print("\n✅ [main] El sistema se reencendió rápidamente. No se reiniciaron los acumulados diarios.")
         avisoEvento(Eventos.REENCENDIDO)
 
     estado_getter = crear_get_estado(tiempo, parametros, valvula, bomba, ctdavb, dosificar)

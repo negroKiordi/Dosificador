@@ -4,7 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Dosificador — Inicio</title>
-<link rel="stylesheet" href="/static/styles.css">
+<style>
+  :root{--bg:#f0f8ff;--accent:#006400;--muted:#666}
+  body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:24px;background:var(--bg);color:#222}
+  header{display:flex;align-items:center;gap:12px}
+  h1{margin:0;color:var(--accent)}
+  .card{background:#fff;border-radius:8px;padding:16px;margin-top:18px;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .col{flex:1;min-width:180px}
+  .label{font-size:0.85rem;color:var(--muted)}
+  .value{font-size:1.3rem;font-weight:600;margin-top:6px}
+  .pct{color:var(--accent);font-weight:700}
+  .buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  button{background:var(--accent);color:#fff;border:none;padding:10px 12px;border-radius:6px;cursor:pointer}
+  button.ghost{background:#fff;color:var(--accent);border:1px solid #cfead8}
+  footer{margin-top:18px;color:var(--muted);font-size:0.85rem}
+</style>
 </head>
 <body>
 <header>
@@ -14,7 +29,7 @@
     <div class="label">Clave: <strong>antiempaste</strong></div>
   </div>
 </header>
-
+ 
 <div class="card" id="valores">
   <h2>Valores corrientes</h2>
   <div class="row">
@@ -26,20 +41,22 @@
       <div class="label">Hora</div>
       <div class="value" id="hora">--</div>
     </div>
+    <div class="col">
+      <div class="label"> </div>
+    </div>
   </div>
 
   <div style="height:8px"></div>
 
   <div class="row">
     <div class="col">
-      <div class="label">TDAVB — Tiempo Apertura Diaria Estimada (s)</div>
+      <div class="label">TDAVB — Tiempo Apertura Diaria (s)</div>
       <div class="value" id="tdavb">--</div>
-      <div class="label" style="margin-top:6px">Estimación diaria de apertura contraído</div>
     </div>
 
     <div class="col">
-      <div class="label">TAVB — Tiempo Apertura acumulado (min)</div>
-      <div class="value" id="tavb">--</div>
+      <div class="label">TAVB — Tiempo Apertura acumulado (hh:mm:ss)</div>
+      <div class="value" id="tdavbacc">--:--:--</div>
       <div class="label">(% respecto a TDAVB) <span id="tavb_pct" class="pct">--</span></div>
     </div>
 
@@ -98,8 +115,8 @@
       <div class="value" id="cap_carga_max">--</div>
     </div>
     <div class="col">
-      <div class="label">Dosis Diaria Máxima (ml)</div>
-      <div class="value" id="cap_dosis_max">--</div>
+      <div class="label">Caudal Mínimo de Bomba (ml/seg)</div>
+      <div class="value" id="cap_qbomba_minimo">--</div>
     </div>
   </div>
 </div>
@@ -117,6 +134,83 @@
   <div id="status" class="label">Conectando…</div>
 </footer>
 
-<script src="/static/app.js"></script>
+<script>
+function $(id){return document.getElementById(id)}
+
+// asignar botones (por ahora solo prints en consola)
+$('btn_config').addEventListener('click', ()=>console.log('Configurar'));
+$('btn_descargar').addEventListener('click', ()=>console.log('Descargar Historia'));
+$('btn_manual').addEventListener('click', ()=>console.log('Control Manual Bomba'));
+$('btn_borrar').addEventListener('click', ()=>console.log('Borrar Historia'));
+
+/** Convierte segundos a "hh:mm:ss" (horas ilimitadas), devuelve "--:--:--" si no válido */
+function formatSecondsToHMS(seconds) {
+  if (seconds == null || isNaN(seconds)) return "--:--:--";
+  seconds = Math.max(0, Math.floor(Number(seconds)));
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  const pad = v => String(v).padStart(2, "0");
+  return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`;
+}
+
+async function actualizar(){
+  try{
+    const r = await fetch('/status',{cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const j = await r.json();
+
+    // Valores corrientes
+    $('fecha').textContent = j.fecha || '--';
+    $('hora').textContent  = j.hora  || '--';
+
+    // TDAVB (mostrar en segundos tal como estaba)
+    const tdavbRaw = (j.ctdavb && j.ctdavb.tiempoDiarioApertura!=null) ? Number(j.ctdavb.tiempoDiarioApertura) : null;
+    $('tdavb').textContent = tdavbRaw != null && !isNaN(tdavbRaw) ? tdavbRaw : '--';
+
+    // TAVB: mostrar hh:mm:ss (se espera que tavb esté en segundos)
+    const tavbRaw = (j.ctdavb && j.ctdavb.tiempoAperturaAcumulado!=null) ? Number(j.ctdavb.tiempoAperturaAcumulado) : null;
+    $('tdavbacc').textContent = tavbRaw != null && !isNaN(tavbRaw) ? formatSecondsToHMS(tavbRaw) : '--:--:--';
+
+    // porcentaje respecto a TDAVB (si TDAVB válido y >0)
+    if (tdavbRaw != null && !isNaN(tdavbRaw) && tdavbRaw > 0 && tavbRaw != null && !isNaN(tavbRaw)) {
+      const percent = (tavbRaw / tdavbRaw) * 100;
+      $('tavb_pct').textContent = percent.toFixed(1) + ' %';
+    } else if (j.ctdavb && j.ctdavb.tiempoAperturaAcumuladoPorcentaje!=null) {
+      // si el backend ya entrega el porcentaje, usarlo como fallback
+      $('tavb_pct').textContent = j.ctdavb.tiempoAperturaAcumuladoPorcentaje + ' %';
+    } else {
+      $('tavb_pct').textContent = '--';
+    }
+
+    $('farmaco').textContent = (j.dosificar && j.dosificar.remedioAcumulado!=null) ? j.dosificar.remedioAcumulado : '--';
+    $('farmaco_pct').textContent = (j.dosificar && j.dosificar.remedioAcumuladoPorcentaje!=null) ? j.dosificar.remedioAcumuladoPorcentaje+' %' : '--';
+
+    // Parámetros (desde params.get_all())
+    const p = j.parametros || {};
+    $('param_carga').textContent = p.carga!=null ? p.carga : '--';
+    $('param_dosis').textContent = p.dosis_diaria_farmaco!=null ? p.dosis_diaria_farmaco : '--';
+    $('param_dosis_diaria').textContent = p.DosisDiaria!=null ? p.DosisDiaria : '--';
+    $('param_qbomba').textContent = p.q_bomba!=null ? p.q_bomba : '--';
+    $('param_pulso').textContent = p.tiempo_encendido_bomba!=null ? p.tiempo_encendido_bomba : '--';
+    $('param_descanso').textContent = p.tiempo_descanso_bomba!=null ? p.tiempo_descanso_bomba : '--';
+    $('param_contraccion').textContent = p.porcentaje_contraccion_tdavb!=null ? p.porcentaje_contraccion_tdavb+' %' : '--';
+ 
+    // Capacidad
+    $('cap_carga_max').textContent = j.capacidad ? (j.capacidad.cargaMaxima || '--') : '--';
+    $('cap_qbomba_minimo').textContent = j.capacidad ? (j.capacidad.qbombaminimo || '--') : '--';
+
+    $('status').textContent = 'Última actualización: ' + new Date().toLocaleTimeString();
+  }catch(e){
+    $('status').textContent = 'Error al obtener estado';
+    console.log('fetch error',e);
+  }
+}
+
+// timer cada 1s
+setInterval(actualizar,1000);
+// refresco rápido al abrir
+actualizar();
+</script>
 </body>
 </html>

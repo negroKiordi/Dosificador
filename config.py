@@ -53,7 +53,7 @@ DEFAULT_PARAMETROS = {
 # ================================================================
 # PERSISTENCIA de la información de datos operativos
 # ================================================================
-T_PERSISTENCIA = 600   # Periodo de guardado (en segundos)
+T_PERSISTENCIA = 60   # Periodo de guardado (en segundos)
 ARCHIVO_PERSISTENCIA = "persistenciaDatos.json"
 
 # =============================================================================

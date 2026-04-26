@@ -119,7 +119,7 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
         Es el valor del día anterior afectado por el porcentaje de contracción.
         """
         porcentaje = self._parametros.get_porcentajeContraccionTDAVB()
-        return int(self._tdavb * (1- porcentaje) / 100)
+        return int(self._tdavb * (1- porcentaje/100))
 
     def tiempoAperturaAcumulado(self):
         """Retorna el tiempo real acumulado desde las 00:00 de hoy."""
