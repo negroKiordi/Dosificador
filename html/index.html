@@ -107,10 +107,12 @@
       <div class="value" id="param_contraccion">--</div>
     </div>
     <div class="col">
-      <div class="label"> </div>
+      <div class="label"> Caudal bebida (l/min)</div>
+      <div class="value" id="param_qbebida">--</div>
     </div>
     <div class="col">
-      <div class="label"> </div>
+      <div class="label"> Consumo Agua mininmo (l/100kg) </div>
+      <div class="value" id="param_aguaconsumo">--</div>
     </div>
     
     
@@ -205,6 +207,8 @@ async function actualizar(){
     $('param_pulso').textContent = p.tiempo_encendido_bomba!=null ? p.tiempo_encendido_bomba : '--';
     $('param_descanso').textContent = p.tiempo_descanso_bomba!=null ? p.tiempo_descanso_bomba : '--';
     $('param_contraccion').textContent = p.porcentaje_contraccion_tdavb!=null ? p.porcentaje_contraccion_tdavb+' %' : '--';
+    $('param_qbebida').textContent = p.q_bebida!=null ? p.q_bebida : '--';
+    $('param_aguaconsumo').textContent = p.agua_consumida_por100Kg!=null ? p.agua_consumida_por100Kg : '--';
  
     // Capacidad
     $('cap_carga_max').textContent = j.capacidad ? (j.capacidad.cargaMaxima || '--') : '--';
