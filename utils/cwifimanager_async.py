@@ -71,26 +71,31 @@ class CWifiManager:
         print("📡 Cliente conectado (index):", addr)
         self.last_client_time = utime.ticks_ms()
         try:
-            # leer petición ligera
             try:
                 await reader.read(512)
             except:
                 pass
-            # leer archivo
             try:
-                with open(INDEX_PATH, 'r') as f:
-                    html = f.read()
-                resp = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n" + html
+                with open(INDEX_PATH, 'rb') as f:
+                    data = f.read()
+                headers = ( "HTTP/1.1 200 OK\r\n"
+                            "Content-Type: text/html; charset=utf-8\r\n"
+                            "Content-Length: {}\r\n"
+                            "Connection: close\r\n\r\n" ).format(len(data))
+                # enviar headers como bytes y luego el body binario
+                await writer.awrite(headers.encode('utf-8'))
+                await writer.awrite(data)
+            
             except OSError:
-                resp = ("HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n"
-                        "<h1>404 - index.html no encontrado</h1><p>Sube /html/index.html</p>")
-            await writer.awrite(resp)
-        except Exception as e:
-            print("⚠️ Error serve_index:", e)
-        finally:
-            try:
-                await writer.aclose()
-            except:
+                body = b"404 - index.html no encontrado Sube /html/index.html" 
+                headers = ("HTTP/1.1 404 Not Found\r\nContent-Type: text/html; charset=utf-8\r\n" "Content-Length: {}\r\nConnection: close\r\n\r\n").format(len(body)) 
+                await writer.awrite(headers.encode('utf-8')) 
+                await writer.awrite(body) 
+        except Exception as e: print("⚠️ Error serve_index:", e) 
+        finally: 
+            try: 
+                await writer.aclose() 
+            except: 
                 pass
 
     async def _serve_status(self, reader, writer):
