@@ -1,0 +1,85 @@
+Sigamos con la funcionalidad del boton Control manual de bomba
+
+Te comparto el caso de uso para definir los requerimientos:
+
+1-Objetivo:
+	Encender y Parar la Bomba manualmente de manera incondicional.
+	Queda bajo responsabilidad del Operador no quemar la bomba por exceso de tiempo de encendido.
+	Esto serviría para:
+		i.Medir caudal de fármaco.
+		ii.Llenar las cañerías de fármaco antes de empezar a operar el sistema
+		iii.etc
+2-Precondiciones. 
+	El sistema está funcionando.
+	En la página WEB del sistema el operador ha seleccionado Control Manual Bomba.
+3-Proceso normal:
+	Poner al Sistema en Estado Latente.
+	Se muestra una pantalla con botones para encender y apagar parar la bomba, el tiempo de encendido y un campo para ingresar el tiempo de encendido deseado que siendo cero se toma como infinito.
+	Pantalla
+		1-Campos:
+			i. Cronómetro encendido. En segundos. Acumula el tiempo que la bomba esté encendida.
+			ii. Tiempo de encendido. 0 = infinito. Es para indicar el tiempo para la parada automática. Su valor puede ser un entero mayor o igual a cero
+			iii. Icono encendido. Ícono para indicar claramente que la bomba está encendida o apagada.
+		2-Botones de control:
+			i. Encender
+			ii. Apagar
+			iii. Reset
+			iv. FIN
+		3-El sistema mantiene los campos actualizados al ritmo de los Ticks del sistema.
+		4-El estado inicial es Bomba parada, Tiempo de encendido en 0, Cronómetro en 0.
+		5-Ciclo de trabajo. El sistema queda a la espera de comandos y mantiene los campos siempre actualizados la temporización se realiza con el JS de la página web quien manda comandos de encendido y apagado de la bomba. El estado de la bomba no se lo supone, se lee desde el servidor pidiendo esta información una vez por segundo o inmediatamente luego de una orden de encendio/apagado de la bomba.
+			i. Botón Encender.
+				a- El sistema enciende la Bomba.
+				b- Lanza temporizador de apagado si el Tiempo de Encendido no es infinito.
+			ii. Botón Apagar.
+				a- Este comando es incondicional. Se apaga la bomba aunque tenga el temporizador de apagado activo.
+			iii. Botón FIN
+				a- Apagar la Bomba.
+				b- Ir a Fin del CU
+			iv. Botón Reset
+				a- Funciona solo si la bomba está apagada
+				b- Pone a cero el cronómetro de encendido
+				c- Pone al Tiempo de encendido en el valor configurado.
+			v. Cronómetro encendido
+				a- Acumula segundos mientras la bomba esté encendida
+			vi. Tiempo de encendido 
+				a- Este campo se puede escribir mientras la bomba esté apagada. 
+				b- Si su valor era cero cuando se encendió la bomba queda siempre en cero
+				c- Si su valor al encender la bomba es mayora a cero:
+					i. Se va disminuyendo de a uno cada segundo hasta llegar a cero. 
+					ii. En el instante que llega a cero se debe apagar la bomba y volver
+					al valor original del temporizador.
+					iii. Si se presiona Apagar
+						a- Se detiene y mantiene el valor actual. 
+						b- Si se presiona Encender continúa disminuyendo su valor.
+						c- Si se presiona Reset vuelve al valor original.
+
+	Fin del CU
+		i. Reponer al Sistema en el Estado Operativo 
+4-Situaciones de Error:
+	No aplica.
+5-Postcondiciones:
+	El sistema sigue funcionando en estado Operativo
+	
+---------- fin caso de uso
+
+Para poner en modo latente o modo operativo le agrego al constructor de CWifiManager un objeto de la clase CDosificar
+class CWifiManager:
+    def __init__(self, estado_getter=None, parametros=None, dosificar=None):
+
+este objeto tiene dos metodos para ello:
+
+dosifica.set_estado_operativo()
+dosificar.set_estado_latente()
+
+Para encender y apagar la bomba le agrego al constructor de CWifiManager un objeto de la clase CBombaFarmaco
+class CWifiManager:
+    def __init__(self, estado_getter=None, parametros=None, dosificar=None, bomba=None):
+
+este objeto tiene tres metodos
+Para encender la bomba: bomba.encender()
+Para apagar la bomba: bomba.apagar()
+Para consultar el estado de la bomba: bomba.esta_encendida() retorna True si esta encendida de lo contrario retorna False
+
+El codigo de esta pagina lo vamos a escribir en un archivo llamado bombaManual.html
+El servidor lo va a alojar en html/bombaManual.html

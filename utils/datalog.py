@@ -26,6 +26,12 @@ def avisoEvento(event_code):
         return
     _datalog.avisoEventoOperativo(event_code)
 
+def borrarHistoria():
+    global _datalog
+    if _datalog is None:
+        print("⚠️  CDatalog no inicializado aún")
+        return
+    _datalog.borrarHistoria()
 
 def exportarLogConfiguracion():
     global _datalog

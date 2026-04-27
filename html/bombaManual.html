@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Control Manual Bomba</title>
+<style>
+  :root{--bg:#f7fff7;--accent:#006400;--muted:#666}
+  body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:18px;background:var(--bg);color:#222}
+  header{display:flex;align-items:center;gap:12px}
+  h1{margin:0;color:var(--accent)}
+  .card{background:#fff;border-radius:8px;padding:14px;margin-top:12px;box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+  .row{display:flex;gap:12px;align-items:center}
+  .label{color:var(--muted);font-size:0.9rem}
+  .big{font-size:1.6rem;font-weight:700;margin:6px 0}
+  input[type=number]{width:120px;padding:8px;border-radius:6px;border:1px solid #ddd}
+  button{background:var(--accent);color:#fff;border:none;padding:10px 12px;border-radius:6px;cursor:pointer}
+  button.ghost{background:#fff;color:var(--accent);border:1px solid #cfead8}
+  button.warn{background:#b22222}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .state{display:flex;gap:8px;align-items:center}
+  .led{width:14px;height:14px;border-radius:50%;background:#ccc;border:1px solid #aaa}
+  .led.on{background:#0f0;box-shadow:0 0 6px #0f0}
+  footer{margin-top:14px;color:var(--muted);font-size:0.9rem}
+</style>
+</head>
+<body>
+<header>
+  <h1>Control Manual — Bomba</h1>
+  <div style="margin-left:auto" class="label">Modo manual</div>
+</header>
+
+<div class="card">
+  <div class="label">Icono estado</div>
+  <div class="state">
+    <div id="led" class="led"></div>
+    <div id="estado_text" class="label">Apagada</div>
+  </div>
+
+  <div style="height:10px"></div>
+
+  <div class="label">Cronómetro encendido (s)</div>
+  <div class="big" id="cronometro">0</div>
+
+  <div class="label">Tiempo de encendido (s) — 0 = infinito</div>
+  <div class="row">
+    <input id="tiempo_input" type="number" min="0" step="1" value="0">
+    <div style="margin-left:12px" class="label">Restante: <span id="tiempo_restante">0</span> s</div>
+  </div>
+
+  <div class="controls">
+    <button id="btn_encender">Encender</button>
+    <button id="btn_apagar" class="ghost">Apagar</button>
+    <button id="btn_reset" class="ghost">Reset</button>
+    <button id="btn_fin" class="warn">FIN</button>
+  </div>
+
+  <div style="height:8px"></div>
+  <div class="label">Notas: El operador es responsable de no sobrecalentar la bomba.</div>
+</div>
+
+<footer>
+  <div id="status" class="label">Conectando…</div>
+</footer>
+
+<script>
+function $(id){return document.getElementById(id)}
+
+let encendida = false;
+let cronometro = 0;
+let tiempo_configurado = 0;
+let tiempo_restante = 0;
+let tickHandle = null;
+let syncTimer = null;
+let closing = false; // indica que estamos saliendo del modo manual
+
+function setLed(on){
+  const led = $('led');
+  const txt = $('estado_text');
+  if(on){ led.classList.add('on'); txt.textContent = 'Encendida' }
+  else { led.classList.remove('on'); txt.textContent = 'Apagada' }
+}
+function setCron(c){ $('cronometro').textContent = String(Math.floor(c)) }
+function setRestante(r){ $('tiempo_restante').textContent = String(Math.max(0, Math.floor(r))) }
+function setStatus(msg){ $('status').textContent = msg }
+
+
+async function serverExitManual(){
+  try{
+    const r = await fetch('/api/bomba/exit_manual', { cache:'no-store' });
+    if (!r.ok) return false;
+    try{
+      const j = await r.json();
+      return !!(j && j.out === true);
+    }catch(_){
+      // respuesta no JSON pero status OK -> asumir éxito
+      return true;
+    }
+  }catch(e){
+    console.log('exit_manual err', e);
+    return false;
+  }
+} 
+async function serverEncender(){
+  try{ const r = await fetch('/api/bomba/encender',{cache:'no-store'}); return r.ok; }
+  catch(e){ console.log('encender err',e); return false }
+}
+async function serverApagar(){
+  try{ const r = await fetch('/api/bomba/apagar',{cache:'no-store'}); return r.ok; }
+  catch(e){ console.log('apagar err',e); return false }
+}
+async function serverGetEstado(){
+  try{ const r = await fetch('/api/bomba/status',{cache:'no-store'}); if(!r.ok) return null; return await r.json(); }
+  catch(e){ console.log('status err',e); return null }
+}
+
+$('btn_encender').addEventListener('click', async ()=>{
+  if(encendida) return;
+  const v = Number($('tiempo_input').value) || 0;
+  tiempo_configurado = v >= 0 ? Math.floor(v) : 0;
+  // Sólo inicializar tiempo_restante si no hay un valor pendiente (>0).
+  if (tiempo_configurado > 0) {
+    if (!(tiempo_restante > 0)) {
+      tiempo_restante = tiempo_configurado;
+    }
+  } else {
+    tiempo_restante = 0;
+  }
+  const ok = await serverEncender();
+  if(ok){
+    encendida = true;
+    setLed(true);
+    setStatus('Bomba encendida');
+    startTicks();
+  }else{
+    alert('Error encendiendo la bomba');
+  }
+});
+
+$('btn_apagar').addEventListener('click', async ()=>{
+  if(!encendida) return;
+  const ok = await serverApagar();
+  if(ok){
+    encendida = false;
+    setLed(false);
+    setStatus('Bomba apagada');
+  }else{
+    alert('Error apagando la bomba');
+  }
+});
+
+$('btn_reset').addEventListener('click', ()=>{
+  if(encendida){
+    alert('Reset solo disponible con bomba apagada');
+    return;
+  }
+  cronometro = 0;
+  setCron(cronometro);
+  const v = Number($('tiempo_input').value) || 0;
+  tiempo_configurado = v >=0 ? Math.floor(v) : 0;
+  tiempo_restante = tiempo_configurado;
+  setRestante(tiempo_restante);
+  setStatus('Reset realizado');
+});
+
+
+$('btn_fin').addEventListener('click', async ()=>{
+  const btn_fin = $('btn_fin');   // asegúrate de tener la referencia
+  btn_fin.disabled = true;
+  closing = true;                 // marcamos que estamos cerrando
+  if (tickHandle) {
+    clearInterval(tickHandle);
+    tickHandle = null;
+  }
+  try {
+    encendida = false;
+    setLed(false);
+    setStatus('Fin: volviendo al inicio'); 
+    await new Promise(r=>setTimeout(r,300));
+    const ok = await serverExitManual();
+    if (!ok) { 
+      alert('Error al salir de modo manual'); 
+      btn_fin.disabled = false; 
+      closing = false;
+      return; 
+    }
+    await new Promise(r=>setTimeout(r,300));
+    location.href = '/';
+   } catch (e) {
+    alert('Error: ' + (e.message || e));
+    btn_fin.disabled = false;
+    closing = false;
+  }
+});
+
+function startTicks(){
+  if(tickHandle) return;
+  tickHandle = setInterval(async ()=>{
+    if (closing) return;  // no hacer nada si estamos saliendo
+
+    if(encendida){
+      cronometro += 1;
+      setCron(cronometro);
+      if(tiempo_configurado > 0){
+        tiempo_restante = Math.max(0, tiempo_restante - 1);
+        setRestante(tiempo_restante);
+        if(tiempo_restante === 0){
+          await serverApagar();
+          encendida = false;
+          setLed(false);
+          setStatus('Apagado automático (temporizador)');
+          tiempo_restante = tiempo_configurado;
+          setRestante(tiempo_restante);
+        }
+      }
+    }
+    if(syncTimer === null) syncTimer = 0;
+    syncTimer += 1;
+    if(syncTimer >= 5){
+      syncTimer = 0;
+      const s = await serverGetEstado();
+      if(s && typeof s.encendida !== 'undefined'){
+        if(s.encendida && !encendida){
+          encendida = true;
+          setLed(true);
+          setStatus('Sincronizado: bomba encendida');
+        }else if(!s.encendida && encendida){
+          encendida = false;
+          setLed(false);
+          setStatus('Sincronizado: bomba apagada');
+        }
+      }
+    }
+  }, 1000);
+}
+
+ 
+(async function init(){
+  setStatus('Iniciando modo manual...');
+  const s = await serverGetEstado();
+  encendida = (s && s.encendida) ? true : false;
+  setLed(encendida);
+  cronometro = 0;
+  setCron(cronometro);
+  tiempo_configurado = Number($('tiempo_input').value) || 0;
+  tiempo_restante = tiempo_configurado;
+  setRestante(tiempo_restante);
+  setStatus('Listo');
+  startTicks();
+})();
+</script>
+</body>
+</html>

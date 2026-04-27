@@ -1,14 +1,15 @@
 # utils/cdatalog.py
 from utils.interfaces import INuevoDia
 from utils.ceventos import Eventos
+import os
 
 LOG_CONFIG = "log_config.csv"
 LOG_OPERATION = "log_operacion.csv"
 
 MAX_LINES_CONFIG = 500
 MAX_LINES_OPERATION = 2000
-LINE_LENGTH_CONFIG = 80
-LINE_LENGTH_OPERATION = 75
+LINE_LENGTH_CONFIG = 90
+LINE_LENGTH_OPERATION = 80
 
 
 class CDatalog(INuevoDia):
@@ -109,6 +110,26 @@ class CDatalog(INuevoDia):
         self.avisoEventoConfiguracion(Eventos.CONFIG)
         self.avisoEventoOperativo(Eventos.ESTADO)
 
+    def borrarHistoria(self):
+        """Elimina los archivos de log y los recrea con encabezados vacíos."""
+        try:
+            os.remove(LOG_CONFIG)
+        except OSError:
+            pass
+        try:
+            os.remove(LOG_OPERATION)
+        except OSError:
+            pass
+        # Vuelve a crear archivos con encabezados
+        self._create_headers()
+        # Resetear punteros de escritura
+        self._current_config = self._calculate_next_line(LOG_CONFIG, MAX_LINES_CONFIG)
+        self._current_op = self._calculate_next_line(LOG_OPERATION, MAX_LINES_OPERATION)
+        print("\n[CDatalog] 🗑️  Historia borrada")
+        print("[CDatalog]   Próxima línea Config:", self._current_config)
+        print("[CDatalog]   Próxima línea Operación:", self._current_op)
+
+
     # ================================================================
     # ESCRITURA CIRCULAR
     # ================================================================
@@ -166,9 +187,9 @@ class CDatalog(INuevoDia):
     # EXPORTACIÓN (estan en orden pueden tener un salto debido a la circularidad)
     # ================================================================
     def exportarLogConfiguracion(self):
-        print("Log de Configuración listo:", LOG_CONFIG)
+        print("Log de Configuración listo")
         return LOG_CONFIG
 
     def exportarLogOperativo(self):
-        print("Log de Operación listo:", LOG_OPERATION)
+        print("Log de Operación listo")
         return LOG_OPERATION

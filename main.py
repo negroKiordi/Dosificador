@@ -123,7 +123,7 @@ def main():
         avisoEvento(Eventos.REENCENDIDO)
 
     estado_getter = crear_get_estado(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
-    wifi_manager = CWifiManager(estado_getter=estado_getter,parametros=parametros)
+    wifi_manager = CWifiManager(estado_getter=estado_getter,parametros=parametros,dosificar=dosificar,bomba=bomba) 
 
     loop = asyncio.get_event_loop()
     loop.create_task(tarea_operativa(tiempo))

@@ -150,10 +150,11 @@
 function $(id){return document.getElementById(id)}
 
 // asignar botones (por ahora solo prints en consola)
-$('btn_config').addEventListener('click', ()=>console.log('Configurar'));
-$('btn_descargar').addEventListener('click', ()=>console.log('Descargar Historia'));
-$('btn_manual').addEventListener('click', ()=>console.log('Control Manual Bomba'));
-$('btn_borrar').addEventListener('click', ()=>console.log('Borrar Historia'));
+$('btn_config').addEventListener('click', ()=>location.href = 'html/configuracion.html');
+$('btn_descargar').addEventListener('click', descargarHistoria);
+$('btn_manual').addEventListener('click', ()=>location.href = 'html/bombaManual.html');
+$('btn_borrar').addEventListener('click', borrarHistoria);
+ 
 
 /** Convierte segundos a "hh:mm:ss" (horas ilimitadas), devuelve "--:--:--" si no válido */
 function formatSecondsToHMS(seconds) {
@@ -168,6 +169,7 @@ function formatSecondsToHMS(seconds) {
 
 async function actualizar(){
   try{
+    await new Promise(r=>setTimeout(r,300));
     const r = await fetch('/status',{cache:'no-store'});
     if(!r.ok) throw new Error('HTTP '+r.status);
     const j = await r.json();
@@ -218,6 +220,60 @@ async function actualizar(){
   }catch(e){
     $('status').textContent = 'Error al obtener estado';
     console.log('fetch error',e);
+  }
+}
+
+
+async function descargarHistoria() {
+  try {
+    const hoy = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const year = hoy.getFullYear();
+    const mm = pad(hoy.getMonth() + 1);
+    const dd = pad(hoy.getDate());
+    const fecha = `${year}-${mm}-${dd}`;
+
+const jobs = [
+  { url: '/download/config', name: `logConfig-${fecha}.csv` },
+  { url: '/download/operativo', name: `logOperacin-${fecha}.csv` }
+];
+
+for (let job of jobs) {
+  const r = await fetch(job.url, { cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + job.url);
+  const blob = await r.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = job.name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  await new Promise(res => setTimeout(res, 150));
+}
+  } catch (e) {
+    alert('Error al descargar archivos: ' + (e.message || e));
+    console.log(e);
+  }
+}
+
+async function borrarHistoria() {
+  if (!confirm('¿Confirma borrar la historia? Esta acción no se puede deshacer.')) return;
+  try {
+    const r = await fetch('/api/delete_history', { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    const ok = j && j.out === true;
+    const msg = (j && j.msj) ? j.msj : (ok ? 'Historia borrada' : 'No se pudo borrar');
+    alert(msg);
+    if (ok) {
+      // opcional: actualizar UI
+      // location.reload();
+    }
+  } catch (e) {
+    alert('Error al borrar historia: ' + (e.message || e));
+    console.log(e);
   }
 }
 

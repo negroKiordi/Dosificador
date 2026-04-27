@@ -12,7 +12,7 @@ AP_ESSID = "Antiempaste"
 AP_PASS = "antiempaste" 
 
 class CWifiManager:
-    def __init__(self, estado_getter=None, parametros=None):
+    def __init__(self, estado_getter=None, parametros=None, dosificar=None, bomba=None):
         self.boton_wifi = machine.Pin(config.PIN_BOTON_WIFI, machine.Pin.IN, machine.Pin.PULL_UP)
         self.ap = None                # lazy: crear solo al activar
         self.server_task = None
@@ -22,6 +22,8 @@ class CWifiManager:
         self.button_pressed = False
         self.estado_getter = estado_getter
         self.parametros = parametros
+        self.dosificar = dosificar
+        self.bomba = bomba
         # map identificadores -> (get,set,unit,label)
         self._param_map = {
             'carga': ('get_Carga','set_Carga','kg','Carga'),
@@ -96,18 +98,19 @@ class CWifiManager:
             if self.ap:
                 self.ap.active(False)
                 # opcional: liberar referencia
-                # self.ap = None
+                self.ap = None
         except:
             pass
         self.wifi_active = False
         self.activation_time = 0
         self.last_client_time = 0
-
+        self.dosificar.set_estado_operativo() # forzar actualización de estado al desconectar
+ 
     # import diferido y arrancar microdot en tarea uasyncio
     async def _start_server(self):
         try:
             import gc
-            gc.collect()
+            gc.collect() 
         except:
             pass
         try:
@@ -120,28 +123,23 @@ class CWifiManager:
         Response.default_content_type = 'text/html; charset=utf-8'
 
  
-
         @app.route('/')
         async def root(req):
             try:
+                print("📄 Sirviendo index...")
                 return await send_file(INDEX_PATH)
             except Exception as e:
+                print("ERROR {}".format(e)) 
                 return Response("Index not found: {}".format(e), status=404)
 
-        @app.route('/html/configuracion.html')
-        async def conf(req):
+        @app.route('/html/index.html')
+        async def root_html(req):
             try:
-                return await send_file('/html/configuracion.html')
+                print("📄 Sirviendo index...")
+                return await send_file(INDEX_PATH)
             except Exception as e:
-                return Response("Configuracion not found: {}".format(e), status=404)
- 
-        @app.route('/html/config_item.html')
-        async def item(req):
-            try:
-                return await send_file('/html/config_item.html')
-            except Exception as e:
-                return Response("Config_item not found: {}".format(e), status=404)
-
+                print("ERROR {}".format(e)) 
+                return Response("Index not found: {}".format(e), status=404)
 
         @app.route('/status')
         async def status(req):
@@ -156,6 +154,33 @@ class CWifiManager:
                 return Response(ujson.dumps(estado), headers={'Content-Type':'application/json'})
             except Exception as e:
                 return Response(ujson.dumps({"error": str(e)}), headers={'Content-Type':'application/json'}, status=500)
+
+        @app.route('/html/configuracion.html')
+        async def conf(req):
+            try:
+                print("📄 Sirviendo configuración...")
+                return await send_file('/html/configuracion.html')
+            except Exception as e:
+                print("ERROR {}".format(e))
+                return Response("Configuracion not found: {}".format(e), status=404)
+ 
+        @app.route('/html/config_item.html')
+        async def item(req):
+            try:
+                print("📄 Sirviendo config_item...")
+                return await send_file('/html/config_item.html')
+            except Exception as e:
+                return Response("Config_item not found: {}".format(e), status=404)
+
+        @app.route('/html/bombaManual.html')
+        async def bomba_manual(req):
+            try:
+                print("📄 Sirviendo bombaManual...")
+                # poner sistema en latente
+                self.dosificar.set_estado_latente()
+                return await send_file('/html/bombaManual.html')
+            except Exception as e:
+                return Response("BombaManual not found: {}".format(e), status=404)
  
         @app.route('/api/get_param')
         async def api_get(req):
@@ -204,6 +229,106 @@ class CWifiManager:
                 return Response(ujson.dumps(result), headers={'Content-Type':'application/json'})
             except Exception as e:
                 return Response(ujson.dumps({"out":False,"msj":str(e)}), headers={'Content-Type':'application/json'}, status=500)
+
+        @app.route('/download/config')
+        async def download_config(req):
+            try:
+                # pedir al singleton que prepare y devuelva el nombre del archivo
+                from utils import datalog as _dlog
+                fname = _dlog.exportarLogConfiguracion()
+                if not fname:
+                    return Response(ujson.dumps({"error":"no file"}), headers={'Content-Type':'application/json'}, status=500)
+                # leer y devolver el archivo con cabecera para forzar descarga
+                with open('/' + fname, 'rb') as f:
+                    data = f.read()
+                return Response(data, headers={'Content-Type':'text/csv', 'Content-Disposition':'attachment; filename="{}"'.format(fname)})
+            except Exception as e:
+                return Response("Not found: {}".format(e), status=404)
+
+        @app.route('/download/operativo')
+        async def download_operativo(req):
+            try:
+                from utils import datalog as _dlog
+                fname = _dlog.exportarLogOperativo()
+                if not fname:
+                    return Response(ujson.dumps({"error":"no file"}), headers={'Content-Type':'application/json'}, status=500)
+                with open('/' + fname, 'rb') as f:
+                    data = f.read()
+                return Response(data, headers={'Content-Type':'text/csv', 'Content-Disposition':'attachment; filename="{}"'.format(fname)})
+            except Exception as e:
+                return Response("Not found: {}".format(e), status=404)
+
+        @app.route('/api/delete_history')
+        async def api_delete_history(req):
+            try:
+                from utils import datalog as _dlog
+                # llamar al singleton; si no devuelve nada, asumimos éxito
+                res = _dlog.borrarHistoria()
+                if isinstance(res, dict):
+                    payload = res
+                else:
+                    # si res es None o True/False, normalizamos a dict
+                    payload = {"out": True, "msj": "Historia borrada"} if (res is None or res is True) else {"out": False, "msj": "No se pudo borrar"}
+                return Response(ujson.dumps(payload), headers={'Content-Type':'application/json'})
+            except Exception as e:
+                return Response(ujson.dumps({"out": False, "msj": str(e)}), headers={'Content-Type':'application/json'}, status=500)
+ 
+        @app.route('/api/bomba/exit_manual')
+        async def api_bomba_exit(req):
+            try:
+                # debug
+                print("API exit_manual called, wm:", getattr(self, '_wifi_manager', None) is not None)
+                # intentar apagar la bomba si existe
+                try:
+                    if hasattr(self, 'bomba') and self.bomba is not None:
+                        self.bomba.apagar()
+                    else:
+                        print("warning: no self.bomba")
+                except Exception as e:
+                    print("error apagando bomba:", e)
+                    # no abortar: seguimos para intentar setear operativo
+                # intentar restaurar estado operativo
+                try:
+                    if hasattr(self, 'dosificar') and self.dosificar is not None:
+                        self.dosificar.set_estado_operativo()
+                    else:
+                        print("warning: no self.dosificar")
+                except Exception as e:
+                    print("error set_estado_operativo:", e)
+                    return Response(ujson.dumps({"out": False, "msj": "error dosificar: " + str(e)}), headers={'Content-Type':'application/json'}, status=500)
+                return Response(ujson.dumps({"out": True, "msj": "ok"}), headers={'Content-Type':'application/json'})
+            except Exception as e:
+                print("api_bomba_exit fatal:", e)
+                return Response(ujson.dumps({"out": False, "msj": str(e)}), headers={'Content-Type':'application/json'}, status=500)
+
+        @app.route('/api/bomba/encender')
+        async def api_bomba_encender(req):
+            try:
+                self.bomba.encender()
+                return Response(ujson.dumps({"out":True}), headers={'Content-Type':'application/json'})
+            except Exception as e:
+                return Response(ujson.dumps({"out":False,"msj":str(e)}), headers={'Content-Type':'application/json'}, status=500)
+
+        @app.route('/api/bomba/apagar')
+        async def api_bomba_apagar(req):
+            try:
+                self.bomba.apagar()
+                return Response(ujson.dumps({"out":True}), headers={'Content-Type':'application/json'})
+            except Exception as e:
+                return Response(ujson.dumps({"out":False,"msj":str(e)}), headers={'Content-Type':'application/json'}, status=500)
+
+        @app.route('/api/bomba/status')
+        async def api_bomba_status(req):
+            try:
+                enc = self.bomba.esta_encendida()
+            except Exception as e:
+                return Response(ujson.dumps({"error":str(e)}), headers={'Content-Type':'application/json'}, status=500) 
+            return Response(ujson.dumps({"encendida": enc}), headers={'Content-Type':'application/json'})
+
+ 
+
+
+
 
         # attach reference for handlers if needed
         app._wifi_manager = self
