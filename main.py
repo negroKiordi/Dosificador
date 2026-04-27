@@ -1,5 +1,5 @@
 # main_async.py
-import esp, gc
+import esp, gc 
 esp.osdebug(None)
 gc.collect()
 
@@ -73,7 +73,7 @@ def crear_get_estado(tiempo, parametros, valvula, bomba, ctdavb, dosificar):
             print("Error al obtener estado completo:", e)
             estado = {"error": str(e)}
 
-        return estado
+        return estado 
     return getter
 
 async def tarea_operativa(tiempo):
@@ -123,7 +123,7 @@ def main():
         avisoEvento(Eventos.REENCENDIDO)
 
     estado_getter = crear_get_estado(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
-    wifi_manager = CWifiManager(estado_getter=estado_getter)
+    wifi_manager = CWifiManager(estado_getter=estado_getter,parametros=parametros)
 
     loop = asyncio.get_event_loop()
     loop.create_task(tarea_operativa(tiempo))

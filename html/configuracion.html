@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dosificador — Configuración</title>
+<style>
+  :root{--bg:#f0f8ff;--accent:#006400;--muted:#666}
+  body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:20px;background:var(--bg);color:#222}
+  header{display:flex;align-items:center;gap:12px}
+  h1{margin:0;color:var(--accent);font-size:1.2rem}
+  .card{background:#fff;border-radius:8px;padding:12px;margin-top:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+  .list{display:flex;flex-direction:column;gap:8px}
+  .item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:6px;background:#f8fff8;cursor:pointer;border:1px solid #e6f3ea}
+  .item:hover{background:#eef9ee}
+  .label{font-weight:600;color:var(--accent)}
+  .unit{color:var(--muted);font-size:0.9rem}
+  .buttons{display:flex;gap:8px;margin-top:12px}
+  button{background:var(--accent);color:#fff;border:none;padding:10px 12px;border-radius:6px;cursor:pointer}
+  button.ghost{background:#fff;color:var(--accent);border:1px solid #cfead8}
+</style>
+</head>
+<body>
+<header>
+  <h1>Configuración</h1>
+  <div style="margin-left:auto" class="unit">Dosificador</div>
+</header>
+
+<div class="card">
+  <div class="list">
+    <div class="item" data-name="carga" onclick="openItem('carga')">
+      <div><div class="label">Carga</div><div class="unit">[kg]</div></div>
+      <div>></div>
+    </div>
+    <div class="item" data-name="dosis" onclick="openItem('dosis')">
+      <div><div class="label">Dosis</div><div class="unit">[ml/100kg]</div></div><div>></div>
+    </div>
+    <div class="item" data-name="qbomba" onclick="openItem('qbomba')">
+      <div><div class="label">Caudal Bomba</div><div class="unit">[ml/s]</div></div><div>></div>
+    </div>
+    <div class="item" data-name="pulso" onclick="openItem('pulso')">
+      <div><div class="label">Pulso de dosificación</div><div class="unit">[s]</div></div><div>></div>
+    </div>
+    <div class="item" data-name="descanso" onclick="openItem('descanso')">
+      <div><div class="label">Descanso bomba</div><div class="unit">[s]</div></div><div>></div>
+    </div>
+    <div class="item" data-name="contraccion" onclick="openItem('contraccion')">
+      <div><div class="label">%Contracción Tiempo Apertura</div><div class="unit">[%]</div></div><div>></div>
+    </div>
+    <div class="item" data-name="qbebida" onclick="openItem('qbebida')">
+      <div><div class="label">Caudal Bebida</div><div class="unit">[l/min]</div></div><div>></div>
+    </div>
+    <div class="item" data-name="aguaconsumo" onclick="openItem('aguaconsumo')">
+      <div><div class="label">Consumo mínimo de agua</div><div class="unit">[l/100kg]</div></div><div>></div>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button onclick="volver()">VOLVER</button>
+  </div>
+</div>
+
+<script>
+function openItem(name){ location.href = '/html/config_item.html?name=' + encodeURIComponent(name); }
+function volver(){ location.href = '/html/index.html'; }
+</script>
+</body>
+</html>

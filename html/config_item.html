@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Configurar parámetro</title>
+<style>
+  :root{--bg:#f0f8ff;--accent:#006400;--muted:#666}
+  body{font-family:Arial,Helvetica,sans-serif;margin:0;padding:20px;background:var(--bg);color:#222}
+  header{display:flex;align-items:center;gap:12px}
+  h1{margin:0;color:var(--accent);font-size:1.1rem}
+  .card{background:#fff;border-radius:8px;padding:14px;margin-top:14px;box-shadow:0 1px 4px rgba(0,0,0,0.08)}
+  .label{color:var(--muted);font-size:0.95rem}
+  .current{font-weight:700;margin:8px 0}
+  input[type=number]{width:100%;padding:10px;border-radius:6px;border:1px solid #ddd;font-size:1rem}
+  .buttons{display:flex;gap:8px;margin-top:12px}
+  button{background:var(--accent);color:#fff;border:none;padding:10px 12px;border-radius:6px;cursor:pointer}
+  button.ghost{background:#fff;color:var(--accent);border:1px solid #cfead8}
+  .msg{margin-top:10px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Configurar</h1>
+  <div style="margin-left:auto" class="label" id="unit"> </div>
+</header>
+
+<div class="card">
+  <div class="label">Valor actual</div>
+  <div class="current" id="valor_actual">--</div>
+
+  <div class="label">Nuevo valor</div>
+  <input id="input_valor" type="number" step="any" placeholder="Ingrese nuevo valor">
+
+  <div class="buttons">
+    <button id="btn_confirm">Confirmar</button>
+    <button class="ghost" id="btn_cancel">Cancelar</button>
+  </div>
+
+  <div class="msg" id="msg"></div>
+</div>
+
+<script>
+function qs(name){ const s = location.search.match(new RegExp('[?&]'+name+'=([^&]+)')); return s?decodeURIComponent(s[1]):null; }
+const name = qs('name') || '';
+const mapping = {
+  carga:{label:'Carga',unit:'kg'},
+  dosis:{label:'Dosis',unit:'ml/100kg'},
+  qbomba:{label:'Caudal Bomba',unit:'ml/s'},
+  pulso:{label:'Pulso de dosificación',unit:'s'},
+  descanso:{label:'Descanso bomba',unit:'s'},
+  contraccion:{label:'%Contracción Tiempo Apertura',unit:'%'},
+  qbebida:{label:'Caudal Bebida',unit:'l/min'},
+  aguaconsumo:{label:'Consumo mínimo de agua',unit:'l/100kg'}
+};
+const meta = mapping[name] || {label:name, unit:''};
+document.getElementById('title').textContent = meta.label;
+document.getElementById('unit').textContent = meta.unit ? '['+meta.unit+']':''
+
+async function getParam(){
+  try{
+    const r = await fetch('/api/get_param?name='+encodeURIComponent(name),{cache:'no-store'});
+    const j = await r.json();
+    document.getElementById('valor_actual').textContent = (j.value!=null)? j.value : '--';
+    if(j.unit) document.getElementById('unit').textContent = '['+j.unit+']';
+  }catch(e){
+    document.getElementById('msg').textContent = 'Error al obtener valor';
+  }
+}
+
+document.getElementById('btn_cancel').addEventListener('click', ()=> location.href='/html/configuracion.html');
+
+document.getElementById('btn_confirm').addEventListener('click', async ()=>{
+  const v = document.getElementById('input_valor').value;
+  if(v===null || v===''){ alert('Ingrese un valor'); return; }
+  try{
+    const r = await fetch('/api/set_param?name='+encodeURIComponent(name)+'&value='+encodeURIComponent(v));
+    const j = await r.json();
+    if(j.out){
+      alert('Configuración exitosa');
+      location.href = '/html/configuracion.html';
+    }else{
+      alert('Error: ' + (j.msj || 'Valor no válido'));
+    }
+  }catch(e){
+    alert('Error en la petición');
+  }
+});
+
+getParam();
+</script>
+</body>
+</html>
