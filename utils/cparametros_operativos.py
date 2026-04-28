@@ -37,7 +37,7 @@ class CParametrosOperativos:
     def _qbomba_alcanza(self, valor_parms):
         '''Computa Qbomba_requerido usando los valores recibidos valor_parms y 
          controla que sea menor a q_bomba.'''
-        q_bomba_requerido = self.computa_q_bomba_minimo(self, valor_parms)
+        q_bomba_requerido = self.computa_q_bomba_minimo(valor_parms)
         if q_bomba_requerido > valor_parms["q_bomba"]:
             retorno = { "out": False, \
                     "msj": "Se requiere al menos " + str(q_bomba_requerido) + \
@@ -82,7 +82,7 @@ class CParametrosOperativos:
             if retorno["out"]:
                 # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
                 self._valores["dosis_diaria_farmaco"] = dosis
-                self.actualiza_qbombaMinimo(self, retorno["q_bomba_minimo"])
+                self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
                 self._save()
                 retorno["msj"] = "Dosis diaria de fármaco actualizada a " + str(dosis) + " ml/100kg."
         return retorno
@@ -100,7 +100,7 @@ class CParametrosOperativos:
             if retorno["out"]:
                 # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
                 self._valores["q_bomba"] = caudal
-                self.actualiza_qbombaMinimo(self, retorno["q_bomba_minimo"])
+                self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
                 self._save()
                 retorno["msj"] = "Caudal de la bomba actualizado a " + str(caudal) + " ml/seg."
         return retorno
@@ -132,7 +132,7 @@ class CParametrosOperativos:
             if retorno["out"]:
                 # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
                 self._valores["tiempo_encendido_bomba"] = valor
-                self.actualiza_qbombaMinimo(self, retorno["q_bomba_minimo"])
+                self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
                 self._save()
                 retorno["msj"] = "Tiempo Encendido Bomba actualizado a " + str(valor) + " seg."
         return retorno
@@ -152,7 +152,7 @@ class CParametrosOperativos:
             if retorno["out"]:
                 # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
                 self._valores["tiempo_descanso_bomba"] = valor
-                self.actualiza_qbombaMinimo(self, retorno["q_bomba_minimo"])
+                self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
                 self._save()
                 retorno["msj"] = "Tiempo Descanso Bomba actualizado a " + str(valor) + " seg."
         return retorno
@@ -170,8 +170,8 @@ class CParametrosOperativos:
             if retorno["out"]:
                 # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
                 self._valores["q_bebida"] = caudal
-                self.actualiza_qbombaMinimo(self, retorno["q_bomba_minimo"])
-                self.actualiza_cargaMaximaAbrevable(self)
+                self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
+                self.actualiza_cargaMaximaAbrevable()
                 self._save()
                 retorno["msj"] = "Caudal de la bebida actualizado a " + str(caudal) + " l/min."
         return retorno
@@ -183,14 +183,14 @@ class CParametrosOperativos:
         if valor <= 0:
             retorno = {"out": False, "msj": "El valor no puede ser negativo."}
         else:
-            valores_propuestos = self._valores.copy()
+            valores_propuestos = self._valores.copy() 
             valores_propuestos["agua_consumida_por100Kg"] = valor
             retorno = self._qbomba_alcanza(valores_propuestos)
             if retorno["out"]:
                 # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
                 self._valores["agua_consumida_por100Kg"] = valor
-                self.actualiza_qbombaMinimo(self, retorno["q_bomba_minimo"])
-                self.actualiza_cargaMaximaAbrevable(self)
+                self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
+                self.actualiza_cargaMaximaAbrevable()
                 self._save()
                 retorno["msj"] = "Agua consumida/100kg actualizado a " + str(valor) + " l/100kg."
         return retorno

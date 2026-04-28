@@ -42,14 +42,20 @@ class CDatalog(INuevoDia):
         try:
             open(LOG_CONFIG, "r").close()
         except OSError:
+            line = "Fechora,Fecha,Hora,Evento,Carga,Dosis,QBomba,T Bomba ON,T Bomba OFF,Contraccion"
+            if len(line) < LINE_LENGTH_CONFIG:
+                line = line + " " * (LINE_LENGTH_CONFIG - len(line) - 1)
             with open(LOG_CONFIG, "w") as f:
-                f.write("Fechora,Fecha,Hora,Evento,Carga,Dosis,QBomba,T Bomba ON,T Bomba OFF,Contraccion")
+                f.write(line + "\n")
 
         try:
             open(LOG_OPERATION, "r").close()
         except OSError:
+            line = "Fechora,Fecha,Hora,Evento,VB,Bomba,TAVB[min],%,Farmaco[ml],%"
+            if len(line) < LINE_LENGTH_OPERATION:
+                line = line + " " * (LINE_LENGTH_OPERATION - len(line) - 1)
             with open(LOG_OPERATION, "w") as f:
-                f.write("Fechora,Fecha,Hora,Evento,VB,Bomba,TAVB[min],%,Farmaco[ml],%")
+                f.write(line + "\n")
 
     # ================================================================
     # NUEVA FUNCIÓN: BUSCA EL REGISTRO MÁS NUEVO POR FECHORA Y DEVUELVE LA SIGUIENTE POSICIÓN PARA ESCRIBIR

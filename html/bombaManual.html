@@ -185,7 +185,7 @@ $('btn_fin').addEventListener('click', async ()=>{
       return; 
     }
     await new Promise(r=>setTimeout(r,300));
-    location.href = '/';
+    location.href = '/html/index.html';
    } catch (e) {
     alert('Error: ' + (e.message || e));
     btn_fin.disabled = false;

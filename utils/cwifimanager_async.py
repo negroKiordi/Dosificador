@@ -141,20 +141,6 @@ class CWifiManager:
                 print("ERROR {}".format(e)) 
                 return Response("Index not found: {}".format(e), status=404)
 
-        @app.route('/status')
-        async def status(req):
-            try:
-                if self.estado_getter:
-                    try:
-                        estado = self.estado_getter()
-                    except Exception as e:
-                        estado = {"error": str(e)}
-                else:
-                    estado = {"info": "no estado_getter definido"}
-                return Response(ujson.dumps(estado), headers={'Content-Type':'application/json'})
-            except Exception as e:
-                return Response(ujson.dumps({"error": str(e)}), headers={'Content-Type':'application/json'}, status=500)
-
         @app.route('/html/configuracion.html')
         async def conf(req):
             try:
@@ -181,7 +167,21 @@ class CWifiManager:
                 return await send_file('/html/bombaManual.html')
             except Exception as e:
                 return Response("BombaManual not found: {}".format(e), status=404)
- 
+
+        @app.route('/status')
+        async def status(req):
+            try:
+                if self.estado_getter:
+                    try:
+                        estado = self.estado_getter()
+                    except Exception as e:
+                        estado = {"error": str(e)}
+                else:
+                    estado = {"info": "no estado_getter definido"}
+                return Response(ujson.dumps(estado), headers={'Content-Type':'application/json'})
+            except Exception as e:
+                return Response(ujson.dumps({"error": str(e)}), headers={'Content-Type':'application/json'}, status=500)
+
         @app.route('/api/get_param')
         async def api_get(req):
             q = req.args or {}
@@ -205,30 +205,52 @@ class CWifiManager:
             q = req.args or {}
             name = q.get('name')
             raw_value = q.get('value')
+            print(name)
+            print(raw_value)
+
             if not name:
-                return Response(ujson.dumps({"out":False,"msj":"missing name"}), headers={'Content-Type':'application/json'}, status=400)
-            # convertir si posible
-            value = None
-            if raw_value is not None and raw_value != '':
+                return Response(ujson.dumps({"out": False, "msj": "missing name"}),
+                                headers={'Content-Type': 'application/json'}, status=400)
+
+            # convertir a número
+            if raw_value is None or raw_value == '':
+                value = None
+            else:
+                print("raw_value: ", raw_value)
+                s = raw_value
+                # intentar int primero
                 try:
-                    fv = float(raw_value)
-                    if fv.is_integer():
-                        value = int(fv)
-                    else:
-                        value = fv
+                    value = int(s)
+                    print("int: ", value)
                 except:
-                    value = raw_value
+                    # luego float
+                    try:
+                        value = float(s)
+                        print("float: ", value)
+                    except:
+                        print("valor no numérico")
+                        return Response(
+                            ujson.dumps({"out": False, "msj": "Valor no numérico"}),
+                            headers={'Content-Type': 'application/json'}
+                        )
+
             try:
                 info = self._param_map.get(name)
+                print(info)
                 if not info:
-                    return Response(ujson.dumps({"out":False,"msj":"param desconocido"}), headers={'Content-Type':'application/json'})
+                    return Response(ujson.dumps({"out": False, "msj": "param desconocido"}),
+                                    headers={'Content-Type': 'application/json'})
                 setter = getattr(self.parametros, info[1], None) if self.parametros else None
                 if not setter:
-                    return Response(ujson.dumps({"out":False,"msj":"setter no encontrado"}), headers={'Content-Type':'application/json'})
+                    return Response(ujson.dumps({"out": False, "msj": "setter no encontrado"}),
+                                    headers={'Content-Type': 'application/json'})
                 result = setter(value)
-                return Response(ujson.dumps(result), headers={'Content-Type':'application/json'})
+                print("setter OK")
+                return Response(ujson.dumps(result), headers={'Content-Type': 'application/json'})
             except Exception as e:
-                return Response(ujson.dumps({"out":False,"msj":str(e)}), headers={'Content-Type':'application/json'}, status=500)
+                print("error en api_set:", e)
+                return Response(ujson.dumps({"out": False, "msj": str(e)}),
+                                headers={'Content-Type': 'application/json'}, status=500)
 
         @app.route('/download/config')
         async def download_config(req):
