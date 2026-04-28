@@ -28,30 +28,15 @@ def crear_get_estado(tiempo, parametros, valvula, bomba, ctdavb, dosificar):
             # tiempo
             fecha = tiempo.fecha()
             hora  = tiempo.hora()
-
             # ctdavb
             tdavb = ctdavb.tiempoDiarioApertura()  
             tdavbacc = ctdavb.tiempoAperturaAcumulado()   # En segundos
             tavb_pct = ctdavb.tiempoAperturaAcumuladoPorcentaje()
-
             # dosificar
             remedio = dosificar.remedioAcumulado()
             remedio_pct = dosificar.remedioAcumuladoPorcentaje()
-
-            # parametros: usar get_all() (rápido)
-            params = parametros.get_all()
-            carga = params.get('carga')
-            dosis_per_100 = params.get('dosis_diaria_farmaco')
-            dosis_diaria = None
-            if carga is not None and dosis_per_100 is not None:
-                dosis_diaria = (carga * dosis_per_100) / 100.0
-            params['DosisDiaria'] = dosis_diaria
- 
-            # capacidad (valores de ejemplo; define cargaMax en config o parámetros)
-            carga_max = params.get('carga_maxima_abrevable')  
-            q_bomba_minimo = params.get('q_bomba_minimo')
             estado = {
-                "fecha": fecha,
+                "fecha": fecha, 
                 "hora": hora,
                 "ctdavb": {
                     "tiempoDiarioApertura": tdavb,
@@ -62,17 +47,10 @@ def crear_get_estado(tiempo, parametros, valvula, bomba, ctdavb, dosificar):
                     "remedioAcumulado": remedio,
                     "remedioAcumuladoPorcentaje": remedio_pct
                 },
-                "parametros": params,
-                "capacidad": {
-                    "cargaMaxima": carga_max,
-                    "qbombaminimo": q_bomba_minimo
-                }
             }
-            #print(estado)
         except Exception as e:
             print("Error al obtener estado completo:", e)
             estado = {"error": str(e)}
-
         return estado 
     return getter
 

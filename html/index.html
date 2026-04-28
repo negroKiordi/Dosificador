@@ -68,71 +68,6 @@
   </div>
 </div>
 
-<div class="card" id="parametros">
-  <h2>Parámetros</h2>
-  <div class="row">
-    <div class="col">
-      <div class="label">Carga (kg)</div>
-      <div class="value" id="param_carga">--</div>
-    </div>
-    <div class="col">
-      <div class="label">Dosis (ml / 100 kg)</div>
-      <div class="value" id="param_dosis">--</div>
-    </div>
-    <div class="col">
-      <div class="label">Dosis Diaria (ml)</div>
-      <div class="value" id="param_dosis_diaria">--</div>
-    </div>
-  </div>
-
-  <div style="height:10px"></div>
-
-  <div class="row">
-    <div class="col">
-      <div class="label">qBomba (ml/seg)</div>
-      <div class="value" id="param_qbomba">--</div>
-    </div>
-    <div class="col">
-      <div class="label">pulsoBomba (s)</div>
-      <div class="value" id="param_pulso">--</div>
-    </div>
-    <div class="col">
-      <div class="label">descansoMinimoBomba (s)</div>
-      <div class="value" id="param_descanso">--</div>
-    </div>
-  </div>
-  <div class="row">
-    <div class="col">
-      <div class="label"> contracción TDAVB</div>
-      <div class="value" id="param_contraccion">--</div>
-    </div>
-    <div class="col">
-      <div class="label"> Caudal bebida (l/min)</div>
-      <div class="value" id="param_qbebida">--</div>
-    </div>
-    <div class="col">
-      <div class="label"> Consumo Agua mininmo (l/100kg) </div>
-      <div class="value" id="param_aguaconsumo">--</div>
-    </div>
-    
-    
-  </div>
-</div>
-
-<div class="card" id="capacidad">
-  <h2>Capacidad</h2>
-  <div class="row">
-    <div class="col">
-      <div class="label">Carga Máxima (kg)</div>
-      <div class="value" id="cap_carga_max">--</div>
-    </div>
-    <div class="col">
-      <div class="label">Caudal Mínimo de Bomba (ml/seg)</div>
-      <div class="value" id="cap_qbomba_minimo">--</div>
-    </div>
-  </div>
-</div>
-
 <div class="card">
   <div class="buttons">
     <button id="btn_config">Configurar</button>
@@ -150,11 +85,11 @@
 function $(id){return document.getElementById(id)}
 
 // asignar botones (por ahora solo prints en consola)
-$('btn_config').addEventListener('click', ()=>location.href = 'html/configuracion.html');
+$('btn_config').addEventListener('click', ()=>location.href = '/html/configuracion.html');
 $('btn_descargar').addEventListener('click', descargarHistoria);
-$('btn_manual').addEventListener('click', ()=>location.href = 'html/bombaManual.html');
+$('btn_manual').addEventListener('click', ()=>location.href = '/html/bombaManual.html');
 $('btn_borrar').addEventListener('click', borrarHistoria);
- 
+  
 
 /** Convierte segundos a "hh:mm:ss" (horas ilimitadas), devuelve "--:--:--" si no válido */
 function formatSecondsToHMS(seconds) {
@@ -201,6 +136,7 @@ async function actualizar(){
     $('farmaco_pct').textContent = (j.dosificar && j.dosificar.remedioAcumuladoPorcentaje!=null) ? j.dosificar.remedioAcumuladoPorcentaje+' %' : '--';
 
     // Parámetros (desde params.get_all())
+    /*
     const p = j.parametros || {};
     $('param_carga').textContent = p.carga!=null ? p.carga : '--';
     $('param_dosis').textContent = p.dosis_diaria_farmaco!=null ? p.dosis_diaria_farmaco : '--';
@@ -211,11 +147,11 @@ async function actualizar(){
     $('param_contraccion').textContent = p.porcentaje_contraccion_tdavb!=null ? p.porcentaje_contraccion_tdavb+' %' : '--';
     $('param_qbebida').textContent = p.q_bebida!=null ? p.q_bebida : '--';
     $('param_aguaconsumo').textContent = p.agua_consumida_por100Kg!=null ? p.agua_consumida_por100Kg : '--';
- 
+    
     // Capacidad
     $('cap_carga_max').textContent = j.capacidad ? (j.capacidad.cargaMaxima || '--') : '--';
     $('cap_qbomba_minimo').textContent = j.capacidad ? (j.capacidad.qbombaminimo || '--') : '--';
-
+    */
     $('status').textContent = 'Última actualización: ' + new Date().toLocaleTimeString();
   }catch(e){
     $('status').textContent = 'Error al obtener estado';
