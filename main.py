@@ -1,13 +1,8 @@
-# main_async.py
-import esp, gc 
-esp.osdebug(None)
-gc.collect()
-
+# main.py
 import uasyncio as asyncio
 import utime
 import config
 
-# importa tus módulos de instrumentación como antes
 from utils.cvalvula_bebedero import CvalvulaBebedero
 from utils.cparametros_operativos import CParametrosOperativos
 from utils.cbomba_farmaco import CBombaFarmaco
@@ -15,12 +10,13 @@ from utils.ctdavb import CTDAVB
 from utils.cdosificar import CDosificar
 from utils.ctiempo import CTiempo
 from utils.cdatalog import CDatalog
-from utils.datalog import avisoEvento
+from utils.datalog import avisoEvento, init as datalog_init
 from utils.ceventos import Eventos
 
+from tarea_wifi import tarea_wifi
+from server import app  # Microdot
+import server           # para setear referencias
 
-# importa el wifi manager asíncrono
-from utils.cwifimanager_async import CWifiManager
 
 def crear_get_estado(tiempo, parametros, valvula, bomba, ctdavb, dosificar):
     def getter():
@@ -54,6 +50,7 @@ def crear_get_estado(tiempo, parametros, valvula, bomba, ctdavb, dosificar):
         return estado 
     return getter
 
+
 async def tarea_operativa(tiempo):
     intervalo_ms = 1000
     ultimo = utime.ticks_ms()
@@ -64,9 +61,8 @@ async def tarea_operativa(tiempo):
             ultimo = ahora
         await asyncio.sleep_ms(10)
 
-def main():
-    print("\nIniciando sistema (async)...")
-    gc.collect()
+async def main_async():
+    print("\nIniciando sistema (async + Microdot estándar)...")
 
     parametros = CParametrosOperativos()
     valvula = CvalvulaBebedero(pin=config.VALVULA_PIN)
@@ -76,7 +72,7 @@ def main():
     dosificar = CDosificar(bomba, parametros, ctdavb)
     datalog = CDatalog(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
 
-    # Vinculaciones igual que antes
+    # vínculos como antes
     valvula.listaCambioValvula(ctdavb)
     valvula.listaCambioValvula(dosificar)
     ctdavb.valvulaBebedero(valvula)
@@ -87,26 +83,31 @@ def main():
     tiempo.listaTick(ctdavb)
     tiempo.listaTick(bomba)
     tiempo.listaTick(dosificar)
-    tiempo.listaTick(bomba)
-    
-    # Data Logger (singleton global)
-    from utils.datalog import init as datalog_init
+
     datalog_init(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
 
     if not tiempo.reencendio():
-        print("\n✅ [main] El sistema se reencendió después de haber estado apagado. Se han reiniciado los acumulados diarios.")
         avisoEvento(Eventos.ENCENDIDO)
     else:
-        print("\n✅ [main] El sistema se reencendió rápidamente. No se reiniciaron los acumulados diarios.")
         avisoEvento(Eventos.REENCENDIDO)
 
     estado_getter = crear_get_estado(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
-    wifi_manager = CWifiManager(estado_getter=estado_getter,parametros=parametros,dosificar=dosificar,bomba=bomba) 
 
-    loop = asyncio.get_event_loop()
-    loop.create_task(tarea_operativa(tiempo))
-    loop.create_task(wifi_manager.run())
-    loop.run_forever()
+    # pasar referencias al módulo server
+    server.estado_getter = estado_getter
+    server.parametros = parametros
+    server.dosificar = dosificar
+    server.bomba = bomba
 
-if __name__ == "__main__":
+    # lanzar tareas
+    asyncio.create_task(tarea_operativa(tiempo))
+    asyncio.create_task(tarea_wifi())
+
+    # arrancar servidor HTTP (Microdot) en este mismo loop
+    await app.start_server(host='0.0.0.0', port=80)
+
+def main():
+    asyncio.run(main_async())
+
+if __name__ == '__main__':
     main()

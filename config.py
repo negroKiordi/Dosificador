@@ -15,23 +15,24 @@ PIN_BOTON_WIFI = 13      # GPIO13 = D7 (con resistencia pull-up interna, se acti
 """
 
 # =============================================================================
-# CONFIGURACIÓN DE PINES - NodeMCU ESP-32S (ESP32-WROOM-32)
+# CONFIGURACIÓN DE PINES - ESP32-S3
 # =============================================================================
 
 # Salidas digitales (válvula y bomba) - Pines seguros y con buen PWM
-VALVULA_PIN = 15          # GPIO5  → equivalente físico cercano al D1 del ESP8266
-BOMBA_PIN   = 32          # GPIO4  → equivalente físico cercano al D2 del ESP8266
+VALVULA_PIN = 14   
+BOMBA_PIN   = 13   
 
 # I2C para el RTC (reloj) - Usamos los pines DEFAULT recomendados del ESP32
-TIEMPO_SDA_PIN = 19      # GPIO21 → Mejor pin para SDA (estándar en ESP32)
-TIEMPO_SCL_PIN = 18      # GPIO22 → Mejor pin para SCL (estándar en ESP32)
+TIEMPO_SDA_PIN = 8
+TIEMPO_SCL_PIN = 9
 
 # Botón WiFi (input con pull-up interna)
-PIN_BOTON_WIFI = 13      # GPIO13 → Mismo número que tenías, es seguro como entrada
+PIN_BOTON_WIFI = 10
 
 # Pines adicionales recomendados (por si los necesitas después)
-LED_STATUS     = 2     # GPIO2  (muchas placas tienen LED integrado aquí)
-
+LED_STATUS     = 11
+LED_INTERNO   = 48
+LED_WIFI       = LED_STATUS
 
 # =============================================================================
 # VALORES POR DEFECTO
