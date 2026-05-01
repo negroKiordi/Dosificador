@@ -1,6 +1,8 @@
 # utils/cparametros_operativos.py
 import ujson
 import config
+from utils.datalog import avisoEventoConfig
+from utils.ceventos import Eventos
 
 class CParametrosOperativos:
     """
@@ -10,18 +12,19 @@ class CParametrosOperativos:
     """
 
     def __init__(self):
-        self._valores = config.DEFAULT_PARAMETROS.copy()
+        self._valores = None
         self._load()
         print("CParametrosOperativos cargados desde config.py + parametros.json")
 
     def _load(self):
+        
         """Carga desde el archivo JSON. Si no existe, lo crea con defaults."""
         try:
             with open(config.ARCHIVO_PARAMETROS, "r") as f:
-                datos = ujson.load(f)
-                self._valores.update(datos)
-            print("Parámetros cargados desde", config.ARCHIVO_PARAMETROS)
+                self._valores = ujson.load(f)
+                print("Parámetros cargados desde", config.ARCHIVO_PARAMETROS)
         except (OSError, ValueError):
+            self._valores = config.DEFAULT_PARAMETROS.copy()
             print("Archivo", config.ARCHIVO_PARAMETROS, "no encontrado o corrupto.")
             print("Creando nuevo archivo con valores por defecto de config.py")
             self._save()
@@ -41,7 +44,7 @@ class CParametrosOperativos:
         if q_bomba_requerido > valor_parms["q_bomba"]:
             retorno = { "out": False, \
                     "msj": "Se requiere al menos " + str(q_bomba_requerido) + \
-                    " ml/seg." + "Qbomba =" + valor_parms["q_bomba"] + \
+                    " ml/seg." + "Qbomba =" + str(valor_parms["q_bomba"]) + \
                     " Puede ajustar Dosis, tiempo de descanso o Qbedida" +\
                     " antes de aumentar Qbomba."}
         else:
@@ -67,6 +70,8 @@ class CParametrosOperativos:
             self._valores["carga"] = carga
             self._save()
             retorno = {"out": True, "msj": "Carga actualizada a " + str(carga) + " kg."}
+        
+        avisoEventoConfig(event_code=Eventos.CBIO_CARGA)  # Evento: Carga actualizada
         return retorno
 
     def get_DosisDiariaFarmaco(self):
@@ -84,6 +89,7 @@ class CParametrosOperativos:
                 self._valores["dosis_diaria_farmaco"] = dosis
                 self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
                 self._save()
+                avisoEventoConfig(event_code=Eventos.CBIO_DOSIS)  # Evento: Dosis diaria de fármaco actualizada
                 retorno["msj"] = "Dosis diaria de fármaco actualizada a " + str(dosis) + " ml/100kg."
         return retorno
 
@@ -97,12 +103,14 @@ class CParametrosOperativos:
             valores_propuestos = self._valores.copy()
             valores_propuestos["q_bomba"] = caudal
             retorno = self._qbomba_alcanza(valores_propuestos)
-            if retorno["out"]:
+            if retorno["out"]: 
                 # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
                 self._valores["q_bomba"] = caudal
                 self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
-                self._save()
+                self._save() 
+
                 retorno["msj"] = "Caudal de la bomba actualizado a " + str(caudal) + " ml/seg."
+                avisoEventoConfig(event_code=Eventos.CBIO_QBOMBA)  # Evento: Caudal de la bomba actualizado
         return retorno
 
     def get_porcentajeContraccionTDAVB(self):
@@ -115,6 +123,7 @@ class CParametrosOperativos:
             self._valores["porcentaje_contraccion_tdavb"] = valor
             self._save()
             retorno = {"out": True, "msj": "%taje de Contracción actualizado a " + str(valor) + " %"}
+            avisoEventoConfig(event_code=Eventos.CBIO_PORCENTAJE)  # Evento: %taje de contracción actualizado
         return retorno
 
     def get_tiempoEncendidoBomba(self):
@@ -135,6 +144,7 @@ class CParametrosOperativos:
                 self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
                 self._save()
                 retorno["msj"] = "Tiempo Encendido Bomba actualizado a " + str(valor) + " seg."
+                avisoEventoConfig(event_code=Eventos.CBIO_ENCENDIDO)  # Evento: Tiempo de encendido de la bomba actualizado    
         return retorno
 
     def get_tiempoDescansoBomba(self):
@@ -155,6 +165,7 @@ class CParametrosOperativos:
                 self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
                 self._save()
                 retorno["msj"] = "Tiempo Descanso Bomba actualizado a " + str(valor) + " seg."
+                avisoEventoConfig(event_code=Eventos.CBIO_DESCANSO)  # Evento: Tiempo de descanso de la bomba actualizado
         return retorno
 
     def get_QBebida(self):
@@ -174,6 +185,7 @@ class CParametrosOperativos:
                 self.actualiza_cargaMaximaAbrevable()
                 self._save()
                 retorno["msj"] = "Caudal de la bebida actualizado a " + str(caudal) + " l/min."
+                avisoEventoConfig(event_code=Eventos.CBIO_QBEBIDA)
         return retorno
 
     def get_aguaConsumidaPor100Kg(self):
@@ -193,6 +205,7 @@ class CParametrosOperativos:
                 self.actualiza_cargaMaximaAbrevable()
                 self._save()
                 retorno["msj"] = "Agua consumida/100kg actualizado a " + str(valor) + " l/100kg."
+                avisoEventoConfig(event_code=Eventos.CBIO_AGUA_CONSUMIDA)
         return retorno
 
     def get_cargaMaximaAbrevable(self):

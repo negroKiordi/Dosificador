@@ -145,7 +145,7 @@ class CDatalog(INuevoDia):
             self.parametros.get_Carga(),
             self.parametros.get_DosisDiariaFarmaco(),
             self.parametros.get_QBomba(),
-            self.parametros.get_tiempoMinEncendidoBomba(),
+            self.parametros.get_tiempoEncendidoBomba(),
             self.parametros.get_tiempoDescansoBomba(),
             self.parametros.get_porcentajeContraccionTDAVB()
         )

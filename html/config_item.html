@@ -77,7 +77,7 @@ document.getElementById('btn_confirm').addEventListener('click', async ()=>{
     const r = await fetch('/api/set_param?name='+encodeURIComponent(name)+'&value='+encodeURIComponent(v));
     const j = await r.json();
     if(j.out){
-      alert('Configuración exitosa');
+      alert('Configuración exitosa\n'+j.msj);
       location.href = '/html/configuracion.html';
     }else{
       alert('Error: ' + (j.msj || 'Valor no válido'));

@@ -19,6 +19,10 @@ class Eventos:
     RECH_DESCANSO       = "Rech DesBo"
     CBIO_PORCENTAJE     = "Cbio %Cont"
     RECH_PORCENTAJE     = "Rech %Cont"
+    CBIO_QBEBIDA        = "Cbio QBebi"
+    RECH_QBEBIDA        = "Rech QBebi"
+    CBIO_AGUA_CONSUMIDA = "Cbio ACons"
+    RECH_AGUA_CONSUMIDA = "Rech ACons"
 
     """Eventos de Operación"""
     ESTADO              = "Estado    "

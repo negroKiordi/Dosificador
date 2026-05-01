@@ -89,7 +89,7 @@ async def api_set(req):
     q = req.args or {}
     name = q.get('name')
     raw_value = q.get('value')
-    print("api_set name:", name, "raw_value:", raw_value)
+    #print("api_set name:", name, "raw_value:", raw_value)
 
     if not name:
         return Response(ujson.dumps({"out": False, "msj": "missing name"}),
@@ -102,21 +102,17 @@ async def api_set(req):
         s = raw_value
         try:
             value = int(s)
-            print("int:", value)
         except:
             try:
                 value = float(s)
-                print("float:", value)
             except:
-                print("valor no numérico")
                 return Response(
                     ujson.dumps({"out": False, "msj": "Valor no numérico"}),
                     headers={'Content-Type': 'application/json'}
                 )
-
+ 
     try:
-        info = param_map.get(name)
-        print("param_map info:", info)
+        info = param_map.get(name) 
         if not info:
             return Response(ujson.dumps({"out": False, "msj": "param desconocido"}),
                             headers={'Content-Type': 'application/json'})
@@ -125,10 +121,8 @@ async def api_set(req):
             return Response(ujson.dumps({"out": False, "msj": "setter no encontrado"}),
                             headers={'Content-Type': 'application/json'})
         result = setter(value)
-        print("setter OK, result:", result)
         return Response(ujson.dumps(result), headers={'Content-Type': 'application/json'})
     except Exception as e:
-        print("error en api_set:", e)
         return Response(ujson.dumps({"out": False, "msj": str(e)}),
                         headers={'Content-Type': 'application/json'}, status_code=500)
 
@@ -153,7 +147,7 @@ async def download_config(req):
     except Exception as e:
         print("download_config error:", e)
         return Response("Not found: {}".format(e), status_code=404)
-
+ 
 
 @app.route('/download/operativo')
 async def download_operativo(req):

@@ -53,6 +53,7 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
     def avisoNuevoDia(self):
         """00:00 → reseteamos todo para el nuevo día."""
         self._remedio_acumulado_hoy = 0.0
+        self._save_remedio_acumulado_hoy()
         self._dosing_active = True
         print("[Dosificar] Nuevo día - acumulado reseteado a 0 ml")
 
@@ -231,4 +232,6 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
             "dosing_active": self._dosing_active,
             "valvula_abierta": self._valvula_abierta
         }
+    
+
     

@@ -6,7 +6,7 @@ from utils.ctiempo import DS3231
 import config
 
 # Configura I2C (ajusta pines si usas otros)
-i2c = I2C(scl=Pin(config.SCL_PIN), sda=Pin(config.SDA_PIN), freq=400000)
+i2c = I2C(scl=Pin(config.TIEMPO_SCL_PIN), sda=Pin(config.TIEMPO_SDA_PIN), freq=400000)
 
 # Inicializa RTC
 rtc = DS3231(i2c)
@@ -21,5 +21,12 @@ else:
 
 # Configura fecha/hora deseada
 # Formato: set_datetime(year, month, day, hour, minute, second)
-rtc.set_datetime(year=2026, month=4, day=2, hour=12, minute=34, second=56)
-print("Fecha/hora configurada en DS3231 a 2026-04-02 12:34:56")
+y=2026
+m=5
+d=1
+h=15
+mi=35
+s=0 
+rtc.set_datetime(year=y, month=m, day=d, hour=h, minute=mi, second=s)
+print("Fecha y hora del DS3231 configurada a: {year}-{month}-{day} {hour}:{minute}:{second}".format(
+    year=y, month=m, day=d, hour=h, minute=mi, second=s))

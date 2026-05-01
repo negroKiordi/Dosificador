@@ -100,6 +100,10 @@ class CTiempo:
         y, m, d, h, min, s = self.ds3231.get_datetime()
         return "{:04d}{:02d}{:02d}{:02d}{:02d}{:02d}".format(y, m, d, h, min, s)
 
+    def segundo(self):
+        """Retorna el segundo actual."""
+        _, _, _, _, _, s = self.ds3231.get_datetime()
+        return s
 
     def listaNuevoDia(self, aviso):
         """Agrega listener para nuevo día (00:00)."""
@@ -108,6 +112,8 @@ class CTiempo:
             print("[CTiempo] Nuevo listener de nuevo día agregado:", aviso.__class__.__name__)
             return True
         return False
+    
+    
 
     def listaTick(self, aviso):
         """Agrega listener para recibir tick cada segundo."""
@@ -125,11 +131,13 @@ class CTiempo:
 
         # Detectar si cambió el día
         fecha_actual = self.fecha()
+
         if fecha_actual != self._ultima_fecha:
             print("[CTiempo] ¡Nuevo día detectado!", fecha_actual)
             self.save_dia_opertivo()   # Guardar el nuevo día de operación
             self.clear_flag_muchos_dias_apagado()  # Limpiar el flag de muchos días apagado
             for listener in self._nuevo_dia_listeners:
+                print("[CTiempo] Notificando nuevo día a:", listener.__class__.__name__)    
                 listener.avisoNuevoDia()
             self._ultima_fecha = fecha_actual
 

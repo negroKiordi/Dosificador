@@ -17,6 +17,14 @@ def init(tiempo, parametros, valvula, bomba, ctdavb, dosificar):
     _datalog = CDatalog(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
     print("✅ CDatalog global inicializado correctamente")
 
+def avisoEventoConfig(event_code):
+    """Función global para registrar eventos desde cualquier parte"""
+    global _datalog
+    if _datalog is None:
+        print("⚠️  CDatalog no inicializado aún")
+        return
+    _datalog.avisoEventoConfiguracion(event_code)
+
 
 def avisoEvento(event_code):
     """Función global para registrar eventos desde cualquier parte"""

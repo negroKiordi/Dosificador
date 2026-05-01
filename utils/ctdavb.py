@@ -71,7 +71,7 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
         """
 
         # cambio de carga?
-        if self._parametros.get_carga() != self._load_carga_anterior():
+        if self._parametros.get_Carga() != self._load_carga_anterior():
             # Hubo cambio de Carga.
             carga_anterior = self._load_carga_anterior()
             carga_actual = self._parametros.get_Carga()
@@ -92,11 +92,12 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
             self._tdavb = self._tiempo_acumulado_hoy  
 
         self._save_tdavb()  # Guardamos el TDAVB del día anterior.
+        print("[CTDAVB] Nuevo día → TDAVB anterior guardado:", self._tdavb, "segundos")
 
         self._tiempo_acumulado_hoy = 0
+        self._save_tiempo_acumulado_hoy() 
         # NO tocamos el estado actual de la válvula.
 
-        print("[CTDAVB] Nuevo día → TDAVB anterior guardado:", self._tdavb, "segundos")
 
     def tick(self):
         """Acumula tiempo solo si la válvula está realmente abierta."""
