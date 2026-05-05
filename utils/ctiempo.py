@@ -133,6 +133,7 @@ class CTiempo:
         fecha_actual = self.fecha()
 
         if fecha_actual != self._ultima_fecha:
+        #if self.segundo() == 0:
             print("[CTiempo] ¡Nuevo día detectado!", fecha_actual)
             self.save_dia_opertivo()   # Guardar el nuevo día de operación
             self.clear_flag_muchos_dias_apagado()  # Limpiar el flag de muchos días apagado

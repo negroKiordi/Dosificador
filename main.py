@@ -11,6 +11,7 @@ from utils.cdosificar import CDosificar
 from utils.ctiempo import CTiempo
 from utils.cdatalog import CDatalog
 from utils.datalog import avisoEvento, init as datalog_init
+from utils.datalog import avisoEventoConfig
 from utils.ceventos import Eventos
 
 from tarea_wifi import tarea_wifi
@@ -88,8 +89,12 @@ async def main_async():
 
     if not tiempo.reencendio():
         avisoEvento(Eventos.ENCENDIDO)
+        avisoEventoConfig(Eventos.CFG_ENCENDIDO)
     else:
         avisoEvento(Eventos.REENCENDIDO)
+        avisoEventoConfig(Eventos.CFG_REENCENDIDO)
+    
+    #avisoEventoConfig(Eventos.CONFIG)
 
     estado_getter = crear_get_estado(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
 

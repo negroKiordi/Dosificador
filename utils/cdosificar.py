@@ -50,20 +50,28 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
         """
         self._valvula_abierta = estado
 
+        # Si se cierra la válvula, guardamos el remedio acumulado hasta ahora para
+        # no perder información en caso de corte de energía.
+        if not estado:
+            self._save_remedio_acumulado_hoy()
+            self._ticks_desde_ultima_guarda = 0
+#            print("[CDosificar] Válvula cerrada → guardando remedio acumulado hoy:", 
+#                  self._remedio_acumulado_hoy, "ml",
+#                  "Dosing Active:", self._dosing_active)
+
     def avisoNuevoDia(self):
         """00:00 → reseteamos todo para el nuevo día."""
         self._remedio_acumulado_hoy = 0.0
         self._save_remedio_acumulado_hoy()
         self._dosing_active = True
-        print("[Dosificar] Nuevo día - acumulado reseteado a 0 ml")
+#        print("[Dosificar] Nuevo día - acumulado reseteado a 0 ml")
 
     def tick(self):
         """
         Nueva lógica de dosificación que implementaste.
         Dosifica solo si el acumulado está por debajo del proporcional al TDAVB.
         """
-        self._ticks_desde_ultima_guarda += 1
-
+        
         if not self._dosing_active:
             return
 
@@ -74,6 +82,7 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
         if self._tdavb <= 0:
             return
         
+        self._ticks_desde_ultima_guarda += 1
         # Dosifico solo si el remedio Acumulado es MENOR al Requerido.
         self._remedio_requerido = (self._target_diario * (self._ctdavb.tiempoAperturaAcumulado() / self._tdavb))
         
@@ -102,25 +111,27 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
 
                     self._remedio_acumulado_hoy += self._pulso_remedio
                                     
-                    print("remedio_acumulado_hoy:", self.remedioAcumulado(), 
-                          "ml | proporcion_actual:", self.remedioAcumuladoPorcentaje(), 
-                          "%")
-                    print("Proporcion temporal actual:", 
-                          round((self._ctdavb.tiempoAperturaAcumulado() / self._tdavb) * 100, 1), 
-                          "% del tiempo de apertura total")
+#                    print("remedio_acumulado_hoy:", self.remedioAcumulado(), 
+#                          "ml | proporcion_actual:", self.remedioAcumuladoPorcentaje(), 
+#                          "%")
+#                    print("Proporcion temporal actual:", 
+#                          round((self._ctdavb.tiempoAperturaAcumulado() / self._tdavb) * 100, 1), 
+#                          "% del tiempo de apertura total")
                     
                     # Si ya llegamos al máximo diario → apagamos la dosificación
                     if self._remedio_acumulado_hoy >= self._target_diario:
                         self._dosing_active = False
+                        self._save_remedio_acumulado_hoy()
+                        CTDAVB.save_tiempo_acumulado_actual(self._ctdavb)
                         avisoEvento(Eventos.DOSIS_COMPLETADA)
-                        print("[Dosificar] ⚠️ Máximo diario alcanzado (", 
-                            round(self._remedio_acumulado_hoy, 1), "ml)")
+#                        print("[Dosificar] ⚠️ Máximo diario alcanzado (", 
+#                            round(self._remedio_acumulado_hoy, 1), "ml)")
 
                     # Guardamos el remedio acumulado cada T_PERSISTENCIA segundos para no perder mucha información en caso de corte de energía.          
                     if self._ticks_desde_ultima_guarda >= config.T_PERSISTENCIA:
                         self._save_remedio_acumulado_hoy()  # Guardamos el remedio_acumulado_hoy actual para persistir el valor en caso de corte de energía.
                         self._ticks_desde_ultima_guarda = 0
-                        print("[CDosificar] Guardando remedio acumulado hoy:", self._remedio_acumulado_hoy, "ml") 
+#                        print("[CDosificar] Guardando remedio acumulado hoy:", self._remedio_acumulado_hoy, "ml") 
                     
 
             else:
@@ -137,8 +148,8 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
             if not self._bomba_atrasada:
 
                 self._bomba_atrasada = True
-                print("[Dosificar] ⚠️ Bomba atrasada - no se está dosificando lo suficiente para seguir el ritmo de apertura de la válvula.")
-                print(self.get_estado())
+#                print("[Dosificar] ⚠️ Bomba atrasada - no se está dosificando lo suficiente para seguir el ritmo de apertura de la válvula.")
+#                print(self.get_estado())
                 avisoEvento(Eventos.BOMBA_ATRASADA) 
  
 

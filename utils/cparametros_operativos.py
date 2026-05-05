@@ -40,18 +40,27 @@ class CParametrosOperativos:
     def _qbomba_alcanza(self, valor_parms):
         '''Computa Qbomba_requerido usando los valores recibidos valor_parms y 
          controla que sea menor a q_bomba.'''
+        
+#        print("_qbomba_alcanza + 1" )
+        
         q_bomba_requerido = self.computa_q_bomba_minimo(valor_parms)
+
+#        print("_qbomba_alcanza + 2" )
         if q_bomba_requerido > valor_parms["q_bomba"]:
+#            print("_qbomba_alcanza + 3" )
+
             retorno = { "out": False, \
                     "msj": "Se requiere al menos " + str(q_bomba_requerido) + \
-                    " ml/seg." + "Qbomba =" + str(valor_parms["q_bomba"]) + \
-                    " Puede ajustar Dosis, tiempo de descanso o Qbedida" +\
+                    " ml/seg." + "\nQbomba =" + str(valor_parms["q_bomba"]) + \
+                    " Puede ajustar Dosis, Tiempo de Descanso, Contracción o Qbedida" +\
                     " antes de aumentar Qbomba."}
         else:
+#            print("_qbomba_alcanza + 4" )
             retorno = {"out": True, \
                        "msj": "Qbomba alcanza. Qbomba requerido =" + \
                               str(q_bomba_requerido) + " ml/seg.", \
                        "q_bomba_minimo": q_bomba_requerido}
+#        print("_qbomba_alcanza + 5" )
         return retorno
 
     # ================================================================
@@ -78,19 +87,27 @@ class CParametrosOperativos:
         return self._valores["dosis_diaria_farmaco"]
 
     def set_DosisDiariaFarmaco(self, dosis):
+        #print("set_DosisDiariaFarmaco + 1" )
         if dosis < 0:
+        #    print("set_DosisDiariaFarmaco + 2" )
             retorno = {"out": False, "msj": "La dosis no puede ser negativa."}
         else:
+        #    print("set_DosisDiariaFarmaco + 3" )
             valores_propuestos = self._valores.copy()
             valores_propuestos["dosis_diaria_farmaco"] = dosis
             retorno = self._qbomba_alcanza(valores_propuestos)
+        #    print("set_DosisDiariaFarmaco + 4" )
             if retorno["out"]:
+        #        print("set_DosisDiariaFarmaco + 5" )
                 # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
                 self._valores["dosis_diaria_farmaco"] = dosis
                 self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
                 self._save()
                 avisoEventoConfig(event_code=Eventos.CBIO_DOSIS)  # Evento: Dosis diaria de fármaco actualizada
-                retorno["msj"] = "Dosis diaria de fármaco actualizada a " + str(dosis) + " ml/100kg."
+                retorno["msj"] = "Dosis diaria de fármaco actualizada a " + str(dosis) + " ml/100kg." + \
+                    "\nQbomba mínimo requerido: " + str(retorno["q_bomba_minimo"]) + " ml/seg."
+        #    print("set_DosisDiariaFarmaco + 6" )
+        #print("set_DosisDiariaFarmaco + 7" )
         return retorno
 
     def get_QBomba(self):
@@ -109,7 +126,8 @@ class CParametrosOperativos:
                 self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
                 self._save() 
 
-                retorno["msj"] = "Caudal de la bomba actualizado a " + str(caudal) + " ml/seg."
+                retorno["msj"] = "Caudal de la bomba actualizado a " + str(caudal) + " ml/seg." + \
+                    "\nQbomba mínimo requerido: " + str(retorno["q_bomba_minimo"]) + " ml/seg."
                 avisoEventoConfig(event_code=Eventos.CBIO_QBOMBA)  # Evento: Caudal de la bomba actualizado
         return retorno
 
@@ -120,10 +138,17 @@ class CParametrosOperativos:
         if valor < 1 or valor > 99:
             retorno = {"out": False, "msj": "El %taje de Contracción debe estar entre 1 y 99."}
         else:
-            self._valores["porcentaje_contraccion_tdavb"] = valor
-            self._save()
-            retorno = {"out": True, "msj": "%taje de Contracción actualizado a " + str(valor) + " %"}
-            avisoEventoConfig(event_code=Eventos.CBIO_PORCENTAJE)  # Evento: %taje de contracción actualizado
+            valores_propuestos = self._valores.copy()
+            valores_propuestos["porcentaje_contraccion_tdavb"] = valor
+            retorno = self._qbomba_alcanza(valores_propuestos)
+            if retorno["out"]:
+                # Si la bomba alcanza, se actualiza el valor y q_bomba_minimo
+                self._valores["porcentaje_contraccion_tdavb"] = valor
+                self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
+                self._save()
+                avisoEventoConfig(event_code=Eventos.CBIO_PORCENTAJE)  # Evento: %taje de contracción actualizado
+                retorno["msj"] = "%taje de Contracción actualizado a " + str(valor) + " %" + \
+                    "\nQbomba mínimo requerido: " + str(retorno["q_bomba_minimo"]) + " ml/seg."
         return retorno
 
     def get_tiempoEncendidoBomba(self):
@@ -143,7 +168,8 @@ class CParametrosOperativos:
                 self._valores["tiempo_encendido_bomba"] = valor
                 self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
                 self._save()
-                retorno["msj"] = "Tiempo Encendido Bomba actualizado a " + str(valor) + " seg."
+                retorno["msj"] = "Tiempo Encendido Bomba actualizado a " + str(valor) + " seg." + \
+                    "\nQbomba mínimo requerido: " + str(retorno["q_bomba_minimo"]) + " ml/seg."
                 avisoEventoConfig(event_code=Eventos.CBIO_ENCENDIDO)  # Evento: Tiempo de encendido de la bomba actualizado    
         return retorno
 
@@ -164,7 +190,8 @@ class CParametrosOperativos:
                 self._valores["tiempo_descanso_bomba"] = valor
                 self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
                 self._save()
-                retorno["msj"] = "Tiempo Descanso Bomba actualizado a " + str(valor) + " seg."
+                retorno["msj"] = "Tiempo Descanso Bomba actualizado a " + str(valor) + " seg." + \
+                    "\nQbomba mínimo requerido: " + str(retorno["q_bomba_minimo"]) + " ml/seg."
                 avisoEventoConfig(event_code=Eventos.CBIO_DESCANSO)  # Evento: Tiempo de descanso de la bomba actualizado
         return retorno
 
@@ -184,7 +211,8 @@ class CParametrosOperativos:
                 self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
                 self.actualiza_cargaMaximaAbrevable()
                 self._save()
-                retorno["msj"] = "Caudal de la bebida actualizado a " + str(caudal) + " l/min."
+                retorno["msj"] = "Caudal de la bebida actualizado a " + str(caudal) + " l/min." + \
+                    "\nQbomba mínimo requerido: " + str(retorno["q_bomba_minimo"]) + " ml/seg."
                 avisoEventoConfig(event_code=Eventos.CBIO_QBEBIDA)
         return retorno
 
@@ -204,7 +232,8 @@ class CParametrosOperativos:
                 self.actualiza_qbombaMinimo(retorno["q_bomba_minimo"])
                 self.actualiza_cargaMaximaAbrevable()
                 self._save()
-                retorno["msj"] = "Agua consumida/100kg actualizado a " + str(valor) + " l/100kg."
+                retorno["msj"] = "Agua consumida/100kg actualizado a " + str(valor) + " l/100kg." + \
+                    "\nQbomba mínimo requerido: " + str(retorno["q_bomba_minimo"]) + " ml/seg."
                 avisoEventoConfig(event_code=Eventos.CBIO_AGUA_CONSUMIDA)
         return retorno
 
@@ -235,14 +264,25 @@ class CParametrosOperativos:
         """Computa el valor de q_bomba_minimo usando valor_parms."""
         # q_bomba_requerida = q_bebida [lit/min] / 60 [seg/min] 
         #                     * dosis_diaria_farmaco [ml/100kg]
-        #                     * ( 1 + tiempo_encendido_bomba / tiempo_descanso_bomba ) 
+        #                     * ( 1 + tiempo_descanso_bomba / tiempo_encendido_bomba ) 
         #                     / agua_consumida_por100Kg [lit/100kg]
+        #                     / (1 - porcentaje_contraccion_tdavb/100)
+        
+#        print("QbombaMinimo  1")
+#        print("QbombaMinimo  FactDesc =", 
+#              (1 + valor_parms["tiempo_descanso_bomba"] / valor_parms["tiempo_encendido_bomba"]))
+#        print("QbombaMinimo  FactContracc =", 
+#                ( 1- valor_parms["porcentaje_contraccion_tdavb"] / 100))
+        
         q_bomba_requerida = (valor_parms["q_bebida"] / 60) * \
                             valor_parms["dosis_diaria_farmaco"]  * \
-                            (1 + valor_parms["tiempo_encendido_bomba"] / valor_parms["tiempo_descanso_bomba"]) / \
-                            (valor_parms["agua_consumida_por100Kg"] )
+                            (1 + valor_parms["tiempo_descanso_bomba"] / valor_parms["tiempo_encendido_bomba"]) / \
+                            (valor_parms["agua_consumida_por100Kg"] / \
+                            ( 1- valor_parms["porcentaje_contraccion_tdavb"] / 100))
+#        print("QbombaMinimo =", str(q_bomba_requerida))
         return q_bomba_requerida
-
+#                           ( 1- valor_parms["porcentaje_contraccion_tdavb"] / 100))
+ 
     def get_all(self):
         """Devuelve copia de todos los parámetros (útil para web)."""
         return self._valores.copy()

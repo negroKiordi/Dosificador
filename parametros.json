@@ -1,7 +1,7 @@
 {"q_bomba": 1.33,  
 "tiempo_encendido_bomba": 5, 
 "tiempo_descanso_bomba": 4, 
-"porcentaje_contraccion_tdavb": 75, 
+"porcentaje_contraccion_tdavb": 50, 
 "dosis_diaria_farmaco": 2.5, 
 "agua_consumida_por100Kg": 10,
 "carga": 16000,

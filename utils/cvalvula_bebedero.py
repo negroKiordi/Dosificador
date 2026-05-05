@@ -20,7 +20,10 @@ class CvalvulaBebedero(ITick):
         self._pin = machine.Pin(pin, machine.Pin.IN, machine.Pin.PULL_UP)
         
         # Estado anterior para detectar flancos (cambios)
-        self._estado_anterior = False  # NO usar el estado real llamando a self.valvulaAbierta() Sino sucede que si el bebedero arranca con el flotante bajo, no detecta un cambio al iniciar y se arma un lío con los eventos. Porque la clase cdosificar inicia con su estado en falso tambien.
+        # NO usar el estado real llamando a self.valvulaAbierta() 
+        # Si no sucede que si arrancamos con el flotante bajo no detecta un cambio al iniciar
+        # y se arma un lío con los eventos. Porque la clase cdosificar inicia con su estado en falso tambien.
+        self._estado_anterior = False  
         
         # Lista de listeners (sin typing)
         self._listeners = []
@@ -63,7 +66,7 @@ class CvalvulaBebedero(ITick):
             avisoEvento(Eventos.VB_ABRE) if estado_actual else avisoEvento(Eventos.VB_CIERRA)
             
             # Debug útil durante las primeras pruebas
-            print("[Valvula] Cambio detectado →", "ABIERTA" if estado_actual else "CERRADA")
+#            print("[Valvula] Cambio detectado →", "ABIERTA" if estado_actual else "CERRADA")
 
         # En esta clase no usamos la cadencia,
         # pero la recibimos por la interfaz ITick

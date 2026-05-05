@@ -1,5 +1,11 @@
 [
   {
+    "fullPath": "/.gitignore",
+    "name": ".gitignore",
+    "isDir": false,
+    "depth": 0
+  },
+  {
     "fullPath": "/Testing",
     "name": "Testing",
     "isDir": true,
@@ -54,6 +60,24 @@
     "depth": 0
   },
   {
+    "fullPath": "/html/bombaManual.html",
+    "name": "bombaManual.html",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/html/config_item.html",
+    "name": "config_item.html",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/html/configuracion.html",
+    "name": "configuracion.html",
+    "isDir": false,
+    "depth": 1
+  },
+  {
     "fullPath": "/html/index.html",
     "name": "index.html",
     "isDir": false,
@@ -64,6 +88,18 @@
     "name": "lib",
     "isDir": true,
     "depth": 0
+  },
+  {
+    "fullPath": "/lib/microdot.py",
+    "name": "microdot.py",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/lib/microdot_asyncio.py",
+    "name": "microdot_asyncio.py",
+    "isDir": false,
+    "depth": 1
   },
   {
     "fullPath": "/lib/onewire-0.1.0.dist-info",
@@ -120,22 +156,40 @@
     "depth": 0
   },
   {
-    "fullPath": "/static",
-    "name": "static",
+    "fullPath": "/prompsAI",
+    "name": "prompsAI",
     "isDir": true,
     "depth": 0
   },
   {
-    "fullPath": "/static/app.js",
-    "name": "app.js",
+    "fullPath": "/prompsAI/prompBajarLogs.txt",
+    "name": "prompBajarLogs.txt",
     "isDir": false,
     "depth": 1
   },
   {
-    "fullPath": "/static/styles.css",
-    "name": "styles.css",
+    "fullPath": "/prompsAI/prompControlManualBomba.txt",
+    "name": "prompControlManualBomba.txt",
     "isDir": false,
     "depth": 1
+  },
+  {
+    "fullPath": "/prompsAI/prompDosificadorConfiguracion.txt",
+    "name": "prompDosificadorConfiguracion.txt",
+    "isDir": false,
+    "depth": 1
+  },
+  {
+    "fullPath": "/server.py",
+    "name": "server.py",
+    "isDir": false,
+    "depth": 0
+  },
+  {
+    "fullPath": "/tarea_wifi.py",
+    "name": "tarea_wifi.py",
+    "isDir": false,
+    "depth": 0
   },
   {
     "fullPath": "/utils",
@@ -192,14 +246,14 @@
     "depth": 1
   },
   {
-    "fullPath": "/utils/cwifimanager.py",
-    "name": "cwifimanager.py",
+    "fullPath": "/utils/cwifimanager_async.py",
+    "name": "cwifimanager_async.py",
     "isDir": false,
     "depth": 1
   },
   {
-    "fullPath": "/utils/cwifimanager_async.py",
-    "name": "cwifimanager_async.py",
+    "fullPath": "/utils/cwifimanager_async_dispatch.py",
+    "name": "cwifimanager_async_dispatch.py",
     "isDir": false,
     "depth": 1
   },

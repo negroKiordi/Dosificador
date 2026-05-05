@@ -99,8 +99,9 @@ class CDatalog(INuevoDia):
         fecha = self.tiempo.fecha()
         hora = self.tiempo.hora()
 
-        if event_code in [Eventos.CONFIG,Eventos.CBIO_CARGA, Eventos.CBIO_DOSIS, Eventos.CBIO_QBOMBA,
-                          Eventos.CBIO_ENCENDIDO, Eventos.CBIO_DESCANSO, Eventos.CBIO_PORCENTAJE]:
+        if event_code in [Eventos.CFG_REENCENDIDO,Eventos.CFG_ENCENDIDO,Eventos.CBIO_CARGA,
+                          Eventos.CBIO_DOSIS,Eventos.CBIO_QBOMBA, Eventos.CBIO_ENCENDIDO,
+                          Eventos.CBIO_DESCANSO,Eventos.CBIO_PORCENTAJE,Eventos.CFG_NUEVO_DIA]:
             self._log_config(fechora, fecha, hora, event_code)
         elif event_code in [Eventos.RECH_CARGA, Eventos.RECH_DOSIS, Eventos.RECH_QBOMBA,
                             Eventos.RECH_ENCENDIDO, Eventos.RECH_DESCANSO, Eventos.RECH_PORCENTAJE]:
@@ -113,8 +114,8 @@ class CDatalog(INuevoDia):
         self._log_operation(fechora, fecha, hora, event_code)
 
     def avisoNuevoDia(self):
-        self.avisoEventoConfiguracion(Eventos.CONFIG)
-        self.avisoEventoOperativo(Eventos.ESTADO)
+        self.avisoEventoConfiguracion(Eventos.CFG_NUEVO_DIA)
+        self.avisoEventoOperativo(Eventos.ESTADO_FIN_DIA)
 
     def borrarHistoria(self):
         """Elimina los archivos de log y los recrea con encabezados vacíos."""

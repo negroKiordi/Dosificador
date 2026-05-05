@@ -62,6 +62,13 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
         """
         self._esta_abierta = estado
 
+        # Si se cierra la válvula, guardamos el tiempo acumulado hasta ahora para
+        # no perder información en caso de corte de energía.
+        if not estado:
+            self._save_tiempo_acumulado_hoy()
+            self._ticks_desde_ultima_guarda = 0
+ #           print("[CTDAVB] Válvula cerrada → guardando tiempo acumulado hoy:", self._tiempo_acumulado_hoy, "segundos")
+
     def avisoNuevoDia(self):
         """00:00 → Actualizar el TDAVB
             Si no hubo cambio de carga el TDAVB se actualiza con el 
@@ -82,8 +89,8 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
                 # No uso el _tiempo_acumulado_hoy porque hubo cambio de animales
                 # en algún momento del día.
                 self._tdavb = int(self._tdavb * factor_ajuste)
-                print("[CTDAVB] Cambio de carga detectado. Ajustando TDAVB con factor:", 
-                      factor_ajuste)
+#                print("[CTDAVB] Cambio de carga detectado. Ajustando TDAVB con factor:", 
+#                      factor_ajuste)
             else:
                 # Si no hay carga anterior, usamos el acumulado tal cual.
                 self._tdavb = self._tiempo_acumulado_hoy
@@ -92,7 +99,7 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
             self._tdavb = self._tiempo_acumulado_hoy  
 
         self._save_tdavb()  # Guardamos el TDAVB del día anterior.
-        print("[CTDAVB] Nuevo día → TDAVB anterior guardado:", self._tdavb, "segundos")
+#        print("[CTDAVB] Nuevo día → TDAVB anterior guardado:", self._tdavb, "segundos")
 
         self._tiempo_acumulado_hoy = 0
         self._save_tiempo_acumulado_hoy() 
@@ -109,7 +116,7 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
             if self._ticks_desde_ultima_guarda >= config.T_PERSISTENCIA:
                 self._save_tiempo_acumulado_hoy()  # Guardamos el tiempo_acumulado_hoy actual para persistir el valor en caso de corte de energía.
                 self._ticks_desde_ultima_guarda = 0
-                print("[CTDAVB] Guardando tiempo acumulado hoy:", self._tiempo_acumulado_hoy, "segundos") 
+#                print("[CTDAVB] Guardando tiempo acumulado hoy:", self._tiempo_acumulado_hoy, "segundos") 
 
     # ================================================================
     # MÉTODOS DE CONSULTA
@@ -187,6 +194,10 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
         except (OSError, ValueError):
             self._tiempo_acumulado_hoy = 0
             print("[CTDAVB] No se pudo cargar tiempo acumulado hoy, iniciando en 0 segundos")
+
+    def save_tiempo_acumulado_actual(self):
+        self._save_tiempo_acumulado_hoy
+        
 
     def _save_tiempo_acumulado_hoy(self):
         try:
