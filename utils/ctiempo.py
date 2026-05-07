@@ -1,7 +1,9 @@
 # utils/ctiempo.py
 import machine
 import ujson
+from utils.cparametros_operativos import Eventos
 from utils.interfaces import INuevoDia, ITick
+from utils.datalog import avisoEvento
 import config
 
 
@@ -137,6 +139,12 @@ class CTiempo:
             print("[CTiempo] ¡Nuevo día detectado!", fecha_actual)
             self.save_dia_opertivo()   # Guardar el nuevo día de operación
             self.clear_flag_muchos_dias_apagado()  # Limpiar el flag de muchos días apagado
+
+            avisoEvento(Eventos.ESTADO_FIN_DIA)
+
+#            for listener in self._nuevo_dia_listeners:
+#                print("[CTiempo] Listeners de nuevo día:", listener.__class__.__name__)    
+
             for listener in self._nuevo_dia_listeners:
                 print("[CTiempo] Notificando nuevo día a:", listener.__class__.__name__)    
                 listener.avisoNuevoDia()

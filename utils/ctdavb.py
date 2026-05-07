@@ -76,6 +76,7 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
             Si hubo cambio de carga se ajusta el valor actual 
             proporcionalmente al cambio de carga.
         """
+#        print("[CTDAVB] ingreso a avisoNuevoDia()")
 
         # cambio de carga?
         if self._parametros.get_Carga() != self._load_carga_anterior():
@@ -103,7 +104,10 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
 
         self._tiempo_acumulado_hoy = 0
         self._save_tiempo_acumulado_hoy() 
+        self._ticks_desde_ultima_guarda = 0
         # NO tocamos el estado actual de la válvula.
+
+#        print("[CTDAVB] salida de avisoNuevoDia()")
 
 
     def tick(self):

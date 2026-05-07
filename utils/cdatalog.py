@@ -114,8 +114,12 @@ class CDatalog(INuevoDia):
         self._log_operation(fechora, fecha, hora, event_code)
 
     def avisoNuevoDia(self):
+        print("[CDatalog] ingreso a avisoNuevoDia()")
+
         self.avisoEventoConfiguracion(Eventos.CFG_NUEVO_DIA)
-        self.avisoEventoOperativo(Eventos.ESTADO_FIN_DIA)
+        self.avisoEventoOperativo(Eventos.ESTADO_NVO_DIA)
+
+        print("[CDatalog] salida de avisoNuevoDia()")
 
     def borrarHistoria(self):
         """Elimina los archivos de log y los recrea con encabezados vacíos."""

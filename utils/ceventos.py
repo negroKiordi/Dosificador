@@ -28,6 +28,7 @@ class Eventos:
     RECH_AGUA_CONSUMIDA = "Rech ACons"
 
     """Eventos de Operación"""
+    ESTADO_NVO_DIA      = "Est NvoDia"
     ESTADO_FIN_DIA      = "Est FinDia"
     VB_ABRE             = "VB Abre   "
     VB_CIERRA           = "VB Cierra "

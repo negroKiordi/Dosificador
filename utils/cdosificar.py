@@ -61,10 +61,13 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
 
     def avisoNuevoDia(self):
         """00:00 → reseteamos todo para el nuevo día."""
+#        print("[Dosificar] ingreso a avisoNuevoDia()")
         self._remedio_acumulado_hoy = 0.0
         self._save_remedio_acumulado_hoy()
+        self._ticks_desde_ultima_guarda = 0
         self._dosing_active = True
 #        print("[Dosificar] Nuevo día - acumulado reseteado a 0 ml")
+#        print("[Dosificar] salida de avisoNuevoDia()")
 
     def tick(self):
         """
@@ -122,6 +125,7 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
                     if self._remedio_acumulado_hoy >= self._target_diario:
                         self._dosing_active = False
                         self._save_remedio_acumulado_hoy()
+                        self._ticks_desde_ultima_guarda = 0
                         CTDAVB.save_tiempo_acumulado_actual(self._ctdavb)
                         avisoEvento(Eventos.DOSIS_COMPLETADA)
 #                        print("[Dosificar] ⚠️ Máximo diario alcanzado (", 
