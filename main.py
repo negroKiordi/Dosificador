@@ -13,7 +13,6 @@ from utils.cdatalog import CDatalog
 from utils.datalog import avisoEvento, init as datalog_init
 from utils.datalog import avisoEventoConfig
 from utils.ceventos import Eventos
-
 from tarea_wifi import tarea_wifi
 from server import app  # Microdot
 import server           # para setear referencias
@@ -64,6 +63,8 @@ async def tarea_operativa(tiempo):
 
 async def main_async():
     print("\nIniciando sistema (async + Microdot estándar)...")
+    cdatalog_instance = None # Variable de clase para la instancia singleton
+    print("\nIniciando sistema cdatalog_instance = ", cdatalog_instance)
 
     parametros = CParametrosOperativos()
     valvula = CvalvulaBebedero(pin=config.VALVULA_PIN)
@@ -71,7 +72,7 @@ async def main_async():
     tiempo  = CTiempo(sda_pin=config.TIEMPO_SDA_PIN, scl_pin=config.TIEMPO_SCL_PIN, parametros=parametros)
     ctdavb  = CTDAVB(parametros)
     dosificar = CDosificar(bomba, parametros, ctdavb)
-    datalog = CDatalog(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
+    #datalog = CDatalog(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
 
     # vínculos como antes
     valvula.listaCambioValvula(ctdavb)
@@ -79,12 +80,13 @@ async def main_async():
     ctdavb.valvulaBebedero(valvula)
     tiempo.listaNuevoDia(ctdavb)
     tiempo.listaNuevoDia(dosificar)
-    tiempo.listaNuevoDia(datalog)
+    #tiempo.listaNuevoDia(datalog)
     tiempo.listaTick(valvula)
     tiempo.listaTick(ctdavb)
     tiempo.listaTick(bomba)
     tiempo.listaTick(dosificar)
 
+    #datalog_init() agrega el objeto logger creado a la lista de Nuevo Día.
     datalog_init(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
 
     if not tiempo.reencendio():

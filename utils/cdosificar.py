@@ -25,13 +25,20 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
         self._ctdavb = ctdavb
 
         print("\n✅ [CDosificar]")
-        self._estadoOperativo = True # True = operativo, False = Estado latente para operación manual de bomba
+        self._estadoOperativo = True # True = operativo, False = Operación manual de bomba
         self._load_remedio_acumulado_hoy()
         self._ticks_desde_ultima_guarda = 0
         self._bomba_atrasada = False
         self._valvula_abierta = False
-        self._dosing_active = True
         self._target_diario = self._calcular_dosis_diaria_ml()  
+        if self._remedio_acumulado_hoy >= self._target_diario:
+            self._dosing_active = False
+        else:
+            self._dosing_active = True
+
+        print("[CDosificar] Dosis diaria objetivo:", round(self._target_diario, 2), "ml")
+        print("[CDosificar] Remedio acumulado hoy al iniciar:", self._remedio_acumulado_hoy, "ml")
+
 
 
     def _calcular_dosis_diaria_ml(self):
@@ -87,7 +94,8 @@ class CDosificar(IValvulaListener, INuevoDia, ITick):
         
         self._ticks_desde_ultima_guarda += 1
         # Dosifico solo si el remedio Acumulado es MENOR al Requerido.
-        self._remedio_requerido = (self._target_diario * (self._ctdavb.tiempoAperturaAcumulado() / self._tdavb))
+        self._remedio_requerido = (self._target_diario * \
+                                   (self._ctdavb.tiempoAperturaAcumulado() / self._tdavb))
         
         if self._remedio_acumulado_hoy >= self._remedio_requerido:
             # No hace falta entregar más remedio.

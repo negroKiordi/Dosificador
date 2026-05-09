@@ -19,7 +19,18 @@ class CDatalog(INuevoDia):
     - Buffer circular real.
     """
 
+    contador_instancias = 0  # variable de clase "estática"
+
     def __init__(self, tiempo, parametros, valvula, bomba, ctdavb, dosificar):
+
+        if self.__class__.contador_instancias > 0:
+            print("⚠️  CDatalog ya ha sido inicializado. Usar la instancia existente.")
+            raise Exception("CDatalog ya ha sido inicializado. Usar la instancia existente.")
+
+        self.__class__.contador_instancias += 1
+        print("CDatalog, contador_instancias = ", self.__class__.contador_instancias )
+
+
         self.tiempo = tiempo
         self.parametros = parametros
         self.valvula = valvula

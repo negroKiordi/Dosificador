@@ -2,6 +2,9 @@
 """
 Singleton global del Data Logger.
 Importar y usar desde cualquier parte del proyecto.
+La Clase CDatalog levanta una excepción si se pretende 
+    crear más que una instancia.
+Doble control
 """
 
 _datalog = None
@@ -11,11 +14,15 @@ def init(tiempo, parametros, valvula, bomba, ctdavb, dosificar):
     global _datalog
     if _datalog is not None:
         print("⚠️  CDatalog ya estaba inicializado")
-        return
+        return False
 
     from utils.cdatalog import CDatalog
+
     _datalog = CDatalog(tiempo, parametros, valvula, bomba, ctdavb, dosificar)
-    print("✅ CDatalog global inicializado correctamente")
+    tiempo.listaNuevoDia(_datalog)  # Asegura que CDatalog reciba el evento de nuevo día
+
+    print("✅ objeto CDatalog global inicializado correctamente")
+    return True
 
 def avisoEventoConfig(event_code):
     """Función global para registrar eventos desde cualquier parte"""

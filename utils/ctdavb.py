@@ -105,7 +105,7 @@ class CTDAVB(IValvulaListener, INuevoDia, ITick):
         self._tiempo_acumulado_hoy = 0
         self._save_tiempo_acumulado_hoy() 
         self._ticks_desde_ultima_guarda = 0
-        # NO tocamos el estado actual de la válvula.
+        # NO tocamos el estado actual de la válvula. 
 
 #        print("[CTDAVB] salida de avisoNuevoDia()")
 
